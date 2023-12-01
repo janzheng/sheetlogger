@@ -1,0 +1,22 @@
+{
+  "name": "@yawnxyz/sheetlog",
+  "version": "0.0.1",
+  "description": "simple console.log to google sheets",
+  "scripts": {
+    "pub": "npm publish --access public",
+    "demo": "node ./demo.mjs" 
+  },
+  "keywords": [
+    "log",
+    "logger",
+    "google",
+    "sheets"
+  ],
+  "author": "Jan Zheng",
+  "license": "MIT",
+  "devDependencies": {
+    "async-sema": "^3.1.1",
+    "dotenv": "^16.3.1",
+    "sqids": "^0.3.0"
+  }
+}
