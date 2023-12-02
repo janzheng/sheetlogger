@@ -17,18 +17,23 @@ class Sheet {
     this.sqids = new Sqids();
     this.SHEET_URL = process.env['SHEET_URL'];
     this.logPayload = true;
+    this.concurrency = 2;
+    this.useSqid = true;
   }
 
-  setup({ sheetUrl }) {
-    this.SHEET_URL = sheetUrl;
+  setup({ sheetUrl, logPayload, concurrency, useSqid }) {
+    this.SHEET_URL = this.SHEET_URL || sheetUrl;
+    this.logPayload = this.logPayload || logPayload;
+    this.concurrency = this.concurrency || concurrency;
+    this.useSqid = this.useSqid || useSqid;
   }
 
-  async log(payload, { sheet = 'Logs', concurrency = 2, useSqid = true } = {}) {
-    const semaAdd = new Sema(concurrency);
+  async log(payload, { sheet = 'Logs', sqid = [new Date().getTime()] } = {}) {
+    const semaAdd = new Sema(this.concurrency);
     let data;
     await semaAdd.acquire();
     try {
-      payload['sqid'] = useSqid && this.sqids.encode([new Date().getTime()]);
+      payload['sqid'] = this.useSqid && this.sqids.encode(sqid);
 
       const response = await fetch(this.SHEET_URL, {
         method: 'POST',
@@ -55,5 +60,6 @@ class Sheet {
   }
 }
 
+export { Sheet };
 export default new Sheet();
 

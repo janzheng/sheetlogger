@@ -5,22 +5,69 @@ Sheet log is a simple console.log-like logger — think Sentry — to Google She
 
 This is ideal for projects and prototypes where Sentry is too heavy, and you just want a semi-public log dump. Google Sheets is great because they have filtering, formulas, graphing, and more stuff built in. 
 
+Google Sheets supports up to roughly 200,000 cells per sheet (I think)
 
-## Installation & Usage
+## Installation
 
 1. Create a Google Sheet for logging
 1. Follow the [installation instructions for SpreadAPI](https://spreadapi.roombelt.com)
 1. Replace the default script with the custom script (spreadapi-custom.js) in this repo
 1. Make sure to change the appropriate authentication for your app!!
-1. Set your .env.SHEET_URL to your deployed SpreadAPI Apps Script, or with `sheet.setup({sheetUrl: "some url"})`
-1. To log any object to your sheet, add `sheet.log({some: "data"})` to your code
+1. Deploy the app per installation instructions, and get the custom URL.
+1. Set that URL to .env.SHEET_URL to your deployed SpreadAPI Apps Script, or with `sheet.setup({sheetUrl: "some url"})`
+1. Now you can log any object to your sheet, with `sheet.log({some: "data"})` to your code, and it'll log to the `Logs` sheet!
 
 
-## What's different from SpreadAPI
+## Usage
 
-1. Added column management
+By default, `sheet.log({some: "data"})` logs to a tab named "Logs". You can add more sheets/tabs to your Google Sheet with passing in `{sheet: "sheetName"}`.
+You can also define a sqid based on a custom number sequence, by passing in `{sqid: [1,2,3]}`. Remember that sqids can always be reversed to the original sequence.
+
+```
+sheet.log({some: "data}, {
+  sheet: "sheetName", // custom sheet name
+  sqid: [new Date().getTime(), userId, postId, commentId] // example of adding more items into a sqid for referencing
+  })
+```
+
+You can also change some of the default settings by doing:
+```
+let customSheet = sheet.setup({
+  SHEET_URL: "some custom sheet url",
+  logPayload: false, // log the payload back to console?
+  concurrency: 5,    // async-sema concurrency; can go up to 5
+  useSqid: false,    // creates a sqid based on timestamp for easy referencing
+})
+```
+
+Here's two ways to use sheet.log:
+
+```
+import sheet, { Sheet } from './index.mjs';
+
+// sheet.setup({ sheetUrl: "123" });
+sheet.log({ a: 1, b: 2 });
+
+
+const customSheet = new Sheet();
+customSheet.setup({
+  // SHEET_URL: "https://example.com",
+  logPayload: false, // log the payload back to console?
+  concurrency: 5,    // async-sema concurrency; can go up to 5
+  useSqid: false,    // creates a sqid based on timestamp for easy referencing
+})
+
+customSheet.log({ custom: true });
+```
+
+
+
+## What's different from SpreadAPI?
+
+1. Added column management / dynamic column support
 1. Adding data to "DYNAMIC_POST" creates columns that otherwise don't exist; this lets us log anything we want (but creates clutter in the sheet)
-1. Added dates: the first column is always "Date Modified"
+1. Added date support for every log: the first column is always "Date Modified"
+1. Added better JSON handling; if you have a nested JSON it'll display it properly in each cell
 
 ## Other Dependencies
 

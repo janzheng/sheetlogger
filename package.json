@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "simple console.log to google sheets",
   "scripts": {
+    "commit": "git add .; git commit; git push origin main",
     "pub": "npm publish --access public",
     "demo": "node ./demo.mjs" 
   },
