@@ -6,19 +6,33 @@
 
 */
 
-import { Sema } from 'async-sema'
+// import { Sema } from 'async-sema'
 import Sqids from 'sqids'
 import dotenv from 'dotenv'
 
-dotenv.config();
 
 class Sheet {
   constructor() {
     this.sqids = new Sqids();
-    this.SHEET_URL = process.env['SHEET_URL'];
+    this.loud = false
     this.logPayload = true;
-    this.concurrency = 2;
+    // this.concurrency = 2;
     this.useSqid = true;
+    this.contentType = 'application/json';
+
+    // doing all this so we can use this on the browser
+    // which is NOT SAFE since the URL is exposed
+    // but YOLO
+    if (typeof process !== 'undefined') {
+      dotenv.config();
+      this.SHEET_URL = process.env['SHEET_URL'];
+    } else {
+      this.contentType = 'application/x-www-form-urlencoded';
+      // only form types can be submitted to spreadAPI from the browser
+      if (this.loud) {
+        console.log('Browser mode: set a custom sheetUrl');
+      }
+    }
   }
 
   setup({ sheetUrl, logPayload, concurrency, useSqid }) {
@@ -29,16 +43,22 @@ class Sheet {
   }
 
   async log(payload, { sheet = 'Logs', sqid = [new Date().getTime()] } = {}) {
-    const semaAdd = new Sema(this.concurrency);
+    // const semaAdd = new Sema(this.concurrency);
     let data;
-    await semaAdd.acquire();
+    // await semaAdd.acquire();
     try {
       payload['sqid'] = this.useSqid && this.sqids.encode(sqid);
+
+      if (!this.SHEET_URL) {
+        throw new Error('SHEET_URL not set');
+        return;
+      }
 
       const response = await fetch(this.SHEET_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          // 'Content-Type': 'application/json'
+          'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: JSON.stringify({
           "method": "DYNAMIC_POST",
@@ -49,12 +69,12 @@ class Sheet {
 
       try {
         data = await response.json()
-      } catch(e) {}
+      } catch (e) { }
       if (this.logPayload) {
         console.log(payload);
       }
     } finally {
-      semaAdd.release();
+      // semaAdd.release();
     }
     return data;
   }

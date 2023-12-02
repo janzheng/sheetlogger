@@ -35,7 +35,6 @@ You can also change some of the default settings by doing:
 let customSheet = sheet.setup({
   SHEET_URL: "some custom sheet url",
   logPayload: false, // log the payload back to console?
-  concurrency: 5,    // async-sema concurrency; can go up to 5
   useSqid: false,    // creates a sqid based on timestamp for easy referencing
 })
 ```
@@ -53,7 +52,6 @@ const customSheet = new Sheet();
 customSheet.setup({
   // SHEET_URL: "https://example.com",
   logPayload: false, // log the payload back to console?
-  concurrency: 5,    // async-sema concurrency; can go up to 5
   useSqid: false,    // creates a sqid based on timestamp for easy referencing
 })
 
@@ -69,10 +67,21 @@ customSheet.log({ custom: true });
 1. Added date support for every log: the first column is always "Date Modified"
 1. Added better JSON handling; if you have a nested JSON it'll display it properly in each cell
 
+
+
 ## Other Dependencies
 
-- `async-sema` is used to throttle requests to Google Sheets; more than 5 requests at a time makes Sheets sad
 - `sqids` is used to create short IDs based on request time to quickly identify/search for batches of data in lengthy, inscrutable logs
+
+
+
+## Updates
+
+- Added checks for dotenv and process, so this can be run client-side. It's not safe as the URL is exposed, but move fast / break things / YOLO etc.
+- `async-sema` was causing trouble client-side (for demos) and was removed. Recommend manually wrapping `async-sema` around massive logging jobs though.
+
+
+
 
 ## Thanks
 
