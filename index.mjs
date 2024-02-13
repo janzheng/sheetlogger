@@ -7,25 +7,30 @@
 */
 
 // import { Sema } from 'async-sema'
-import Sqids from 'sqids'
-import dotenv from 'dotenv'
+// import Sqids from 'sqids'
+// import dotenv from 'dotenv'
 
 
 class Sheet {
   constructor() {
-    this.sqids = new Sqids();
     this.loud = false
     this.logPayload = true;
     // this.concurrency = 2;
-    this.useSqid = true;
+    // this.useSqid = true;
     this.contentType = 'application/json';
+    this.defaultSheet = "Logs";
 
     // doing all this so we can use this on the browser
     // which is NOT SAFE since the URL is exposed
     // but YOLO
     if (typeof process !== 'undefined') {
-      dotenv.config();
-      this.SHEET_URL = process.env['SHEET_URL'];
+      // Dynamically import dotenv if process is defined
+      import('dotenv').then(dotenv => {
+        dotenv.config();
+        this.SHEET_URL = process.env['SHEET_URL'];
+      }).catch(error => {
+        console.error('Failed to load dotenv:', error);
+      });
     } else {
       this.contentType = 'application/x-www-form-urlencoded';
       // only form types can be submitted to spreadAPI from the browser
@@ -33,6 +38,14 @@ class Sheet {
         console.log('Browser mode: set a custom sheetUrl');
       }
     }
+
+    // Dynamically import Sqids if available
+    import('sqids').then(SqidsModule => {
+      this.sqids = new SqidsModule.default();
+    }).catch(error => {
+      console.warn('Sqids module not found. Proceeding without it.');
+      this.useSqid = false; // Disable Sqid usage if the module is not found
+    });
   }
 
   setup({ sheetUrl, logPayload, concurrency, useSqid }) {
@@ -40,10 +53,12 @@ class Sheet {
     this.logPayload = this.logPayload || logPayload;
     this.concurrency = this.concurrency || concurrency;
     this.useSqid = this.useSqid || useSqid;
+    this.defaultSheet = this.defaultSheet || defaultSheet;
   }
 
-  async log(payload, { sheet = 'Logs', sqid = [new Date().getTime()] } = {}) {
+  async log(payload, { sheet, sqid = [new Date().getTime()] } = {}) {
     // const semaAdd = new Sema(this.concurrency);
+    sheet = sheet || this.defaultSheet;
     let data;
     // await semaAdd.acquire();
     try {
