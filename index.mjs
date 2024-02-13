@@ -15,10 +15,11 @@ class Sheet {
   constructor() {
     this.loud = false
     this.logPayload = true;
-    // this.concurrency = 2;
-    // this.useSqid = true;
+    // this.concurrency = 2; // not implemented
+    this.useSqid = false;
     this.contentType = 'application/json';
-    this.defaultSheet = "Logs";
+    this.sheet = "Logs";
+    this.method = "POST";
 
     // doing all this so we can use this on the browser
     // which is NOT SAFE since the URL is exposed
@@ -48,38 +49,46 @@ class Sheet {
     });
   }
 
-  setup({ sheetUrl, logPayload, concurrency, useSqid }) {
+  setup({ sheetUrl, logPayload, useSqid, sheet, method }) {
     this.SHEET_URL = this.SHEET_URL || sheetUrl;
-    this.logPayload = this.logPayload || logPayload;
-    this.concurrency = this.concurrency || concurrency;
-    this.useSqid = this.useSqid || useSqid;
-    this.defaultSheet = this.defaultSheet || defaultSheet;
+    this.logPayload = logPayload || this.logPayload;
+    // this.concurrency = concurrency || this.concurrency;
+    this.useSqid = useSqid || this.useSqid;
+    this.sheet = sheet || this.sheet;
+    this.method = method || this.method;
   }
 
-  async log(payload, { sheet, sqid = [new Date().getTime()] } = {}) {
+  async log(payload, { sheet, sheetUrl, sqid, method, id, idColumn } = {}) {
     // const semaAdd = new Sema(this.concurrency);
-    sheet = sheet || this.defaultSheet;
+    sheet = sheet || this.sheet;
     let data;
     // await semaAdd.acquire();
     try {
-      payload['sqid'] = this.useSqid && this.sqids.encode(sqid);
+      if (this.useSqid) {
+        sqid = sqid || [new Date().getTime()]
+        payload['sqid'] = this.useSqid && this.sqids.encode(sqid);
+      }
 
-      if (!this.SHEET_URL) {
+      if (!this.SHEET_URL && !sheetUrl) {
         throw new Error('SHEET_URL not set');
         return;
       }
 
-      const response = await fetch(this.SHEET_URL, {
+      const bodyObject = {
+        "method": method || this.method,
+        "sheet": sheet,
+        "payload": payload,
+      }
+      if(id) bodyObject.id = id;
+      if(idColumn) bodyObject.idColumn = idColumn;
+
+      const response = await fetch(this.SHEET_URL || sheetUrl, {
         method: 'POST',
         headers: {
           // 'Content-Type': 'application/json'
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: JSON.stringify({
-          "method": "DYNAMIC_POST",
-          "sheet": sheet,
-          payload: payload,
-        })
+        body: JSON.stringify(bodyObject)
       })
 
       try {

@@ -25,29 +25,36 @@ By default, `sheet.log({some: "data"})` logs to a tab named "Logs". You can add 
 You can also define a sqid based on a custom number sequence, by passing in `{sqid: [1,2,3]}`. Remember that sqids can always be reversed to the original sequence.
 
 ```
-sheet.log({some: "data}, {
-  sheet: "sheetName", // custom sheet name
-  sqid: [new Date().getTime(), userId, postId, commentId] // example of adding more items into a sqid for referencing
+sheet.log(
+  {Name: "First Name"}, 
+  {
+    sheet: "sheetName", // custom sheet name
+    sqid: [new Date().getTime(), userId, postId, commentId] // example of adding more items into a sqid for referencing
   })
 ```
 
 You can also change some of the default settings by doing:
 ```
 let customSheet = sheet.setup({
-  SHEET_URL: "some custom sheet url",
+  sheetUrl: "some custom sheet url",
   logPayload: false, // log the payload back to console?
-  useSqid: false,    // creates a sqid based on timestamp for easy referencing
+  useSqid: false, // creates a sqid based on timestamp for easy referencing
+  sheet: "sheetName", // custom default sheet name
+  method: "POST", // default method is POST, but can use "DYNAMIC_POST" for adding more columns, etc.
 })
 ```
 
 Here's two ways to use sheet.log:
-
 ```
-import sheet, { Sheet } from './index.mjs';
+import sheet from '@yawnxyz/sheetlog';
 
-// sheet.setup({ sheetUrl: "123" });
-sheet.log({ a: 1, b: 2 });
+sheet.setup({ sheet: "Names" });
+sheet.log({ Name: "Test Name" });
+```
 
+You can setup and create multiple Sheet objects:
+```
+import { Sheet } from '@yawnxyz/sheetlog';
 
 const customSheet = new Sheet();
 customSheet.setup({

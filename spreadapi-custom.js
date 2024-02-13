@@ -81,9 +81,12 @@ function handleRequest(params) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const sheetName = (params.sheet || "").toLowerCase();
-  const _id = params.id == null ? null : +params.id;
+  const _id = params.id == null ? null : +params.id; // row number; not the query id
   const method = (params["method"] || "GET").toUpperCase();
   const key = params.key || "";
+
+  const id = params.id || ""; // used for upsert and find
+  const idColumn = params.idColumn || ""; // used for upsert and find
 
   if (!hasAccess(key, sheetName, method)) {
     return error(401, "unauthorized", {});
@@ -117,6 +120,8 @@ function handleRequest(params) {
         : handleGetMultipleRows(sheet, params);
     case "POST":
       return handlePost(sheet, payload);
+    case "UPSERT":
+      return handleUpsert(sheet, idColumn, id, payload);
     case "DYNAMIC_POST":
       return handleDynamicPost(sheet, payload);
     case "PUT":
@@ -200,35 +205,6 @@ function handleGetMultipleRows(sheet, params) {
 }
 
 
-function handleDynamicPost(sheet, payload) {
-  if (!Array.isArray(payload)) {
-    payload = [payload];
-  }
-
-  addNewColumnsIfNeeded(sheet, payload);
-
-  const headers = getHeaders(sheet);
-  const currentDate = new Date();
-
-  // Pre-process payload to stringify any nested objects
-  const processedPayload = payload.map(obj =>
-    Object.keys(obj).reduce((acc, key) => {
-      acc[key] = typeof obj[key] === 'object' ? JSON.stringify(obj[key]) : obj[key];
-      return acc;
-    }, {})
-  );
-
-  processedPayload.forEach(obj => {
-    // Create a row array with the date in the first column
-    const row = [Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss")];
-    headers.slice(1).forEach(header => row.push(obj[header] || ""));
-    sheet.appendRow(row);
-  });
-
-
-
-  return data(201);
-}
 
 function addNewColumnsIfNeeded(sheet, objects) {
   const existingHeaders = getHeaders(sheet);
@@ -256,8 +232,46 @@ function addNewColumnsIfNeeded(sheet, objects) {
 }
 
 function handlePost(sheet, payload) {
-  const row = mapObjectToRow(payload, getHeaders(sheet));
+  const headers = getHeaders(sheet);
+  const currentDate = new Date();
+  // Format the current date to include it in the first column
+  const formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss");
+
+  // First, map the payload to the row based on headers
+  let row = mapObjectToRow(payload, headers.slice(1)); // Exclude the first header for the date
+
+  // Then, prepend the formatted date to the beginning of the row array
+  row.unshift(formattedDate);
+
   sheet.appendRow(row);
+  return data(201);
+}
+
+function handleDynamicPost(sheet, payload) {
+  if (!Array.isArray(payload)) {
+    payload = [payload];
+  }
+
+  addNewColumnsIfNeeded(sheet, payload);
+
+  const headers = getHeaders(sheet);
+  const currentDate = new Date();
+
+  // Pre-process payload to stringify any nested objects
+  const processedPayload = payload.map(obj =>
+    Object.keys(obj).reduce((acc, key) => {
+      acc[key] = typeof obj[key] === 'object' ? JSON.stringify(obj[key]) : obj[key];
+      return acc;
+    }, {})
+  );
+
+  processedPayload.forEach(obj => {
+    // Create a row array with the date in the first column
+    const row = [Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss")];
+    headers.slice(1).forEach(header => row.push(obj[header] || ""));
+    sheet.appendRow(row);
+  });
+
   return data(201);
 }
 
@@ -275,6 +289,51 @@ function handlePut(sheet, _id, payload) {
   }
 
   return data(201);
+}
+
+function handleUpsert(sheet, idColumn, _id, payload) {
+  const headers = getHeaders(sheet);
+  const idColumnIndex = headers.indexOf(idColumn) + 1; // +1 because SpreadsheetApp is 1-indexed
+  if (idColumnIndex < 1) {
+    return error(400, "id_column_not_found", { idColumn: idColumn });
+  }
+
+  const lastRow = sheet.getLastRow();
+  let foundRow = null;
+  for (let i = 2; i <= lastRow; i++) { // Start from row 2 to skip headers
+    const cellValue = sheet.getRange(i, idColumnIndex).getValue();
+    if (cellValue.toString() === _id.toString()) {
+      foundRow = i;
+      break;
+    }
+  }
+
+  const currentDate = new Date();
+  const formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss");
+
+  if (foundRow) {
+    // Update existing row
+    const rowValues = mapObjectToRow(payload, headers.slice(1)); // Exclude the first header for the date
+    rowValues.unshift(formattedDate); // Prepend the formatted date to the beginning of the row array
+    sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+    return data(200, { message: "Row updated" });
+  } else {
+    // Insert new row
+    addNewColumnsIfNeeded(sheet, [payload]);
+    const processedPayload = processPayloadForInsertion(payload, headers.slice(1)); // Exclude the first header for the date
+    processedPayload.unshift(formattedDate); // Prepend the formatted date to the beginning of the row array
+    sheet.appendRow(processedPayload);
+    return data(201, { message: "Row inserted" });
+  }
+}
+
+function processPayloadForInsertion(payload, headers) {
+  // Pre-process payload to stringify any nested objects and match headers
+  const processedPayload = headers.map(header => {
+    const value = payload[header];
+    return typeof value === 'object' ? JSON.stringify(value) : (value || "");
+  });
+  return processedPayload;
 }
 
 function handleDelete(sheet, _id) {
