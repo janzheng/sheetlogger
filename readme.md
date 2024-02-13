@@ -9,6 +9,7 @@ Google Sheets supports up to roughly 200,000 cells per sheet (I think)
 
 ## Installation
 
+1. Install package: `yarn add --dev @yawnxyz/sheetlog`
 1. Create a Google Sheet for logging
 1. Follow the [installation instructions for SpreadAPI](https://spreadapi.roombelt.com)
 1. Replace the default script with the custom script (spreadapi-custom.js) in this repo
