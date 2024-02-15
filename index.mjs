@@ -109,8 +109,8 @@ class Sheet {
   }
 
   async add(payload, options = {}) {
-    // Directly call log without modifications, making it easier to remember
-    return this.log(payload, options);
+    // .add uses DYNAMIC_POST which can add new columns if they don't already exist
+    return this.log(payload, { ...options, method: "DYNAMIC_POST" });
   }
 
   async find(idColumn, id, returnAllMatches = false) {
