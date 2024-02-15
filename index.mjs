@@ -95,12 +95,27 @@ class Sheet {
         data = await response.json()
       } catch (e) { }
       if (this.logPayload) {
-        console.log(payload);
+        console.log(bodyObject);
       }
     } finally {
       // semaAdd.release();
     }
     return data;
+  }
+
+  async update(payload, options = {}) {
+    // Set the method to "UPSERT" and pass all other options through
+    return this.log(payload, { ...options, method: "UPSERT" });
+  }
+
+  async add(payload, options = {}) {
+    // Directly call log without modifications, making it easier to remember
+    return this.log(payload, options);
+  }
+
+  async find(idColumn, id, returnAllMatches = false) {
+    // Directly pass the method "FIND" and the specific parameters
+    return this.log({}, { idColumn, id, returnAllMatches, method: "FIND" });
   }
 }
 

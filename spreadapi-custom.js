@@ -134,6 +134,9 @@ function handleRequest(params) {
       return handleEditColumn(sheet, params.oldColumnName, params.newColumnName);
     case "REMOVE_COLUMN":
       return handleRemoveColumn(sheet, params.columnName);
+    case "FIND":
+      const returnAllMatches = params.returnAllMatches || false;
+      return handleFind(sheet, idColumn, id, returnAllMatches);
     default:
       return error(404, "unknown_method", { method: method });
   }
@@ -369,6 +372,34 @@ function handleRemoveColumn(sheet, columnName) {
   }
   sheet.deleteColumn(columnIndex);
   return data(204, { message: "Column removed" });
+}
+
+function handleFind(sheet, idColumn, id, returnAllMatches = false) {
+  const headers = getHeaders(sheet);
+  const idColumnIndex = headers.indexOf(idColumn) + 1; // +1 because SpreadsheetApp is 1-indexed
+  if (idColumnIndex < 1) {
+    return error(400, "id_column_not_found", { idColumn: idColumn });
+  }
+
+  const lastRow = sheet.getLastRow();
+  const matches = [];
+  for (let i = 2; i <= lastRow; i++) { // Start from row 2 to skip headers
+    const cellValue = sheet.getRange(i, idColumnIndex).getValue();
+    if (cellValue.toString() === id.toString()) {
+      const rowData = sheet.getRange(i, 1, 1, sheet.getLastColumn()).getValues()[0];
+      const result = mapRowToObject(rowData, i, headers);
+      matches.push(result);
+      if (!returnAllMatches) break; // If not returning all matches, break after the first match
+    }
+  }
+
+  if (matches.length === 0) {
+    return error(404, "no_matches_found", {});
+  } else if (matches.length === 1 && !returnAllMatches) {
+    return data(200, matches[0]); // Return the first match as an object
+  } else {
+    return data(200, matches); // Return all matches as an array
+  }
 }
 
 // HTTP utils
