@@ -1,6 +1,6 @@
 {
   "name": "@yawnxyz/sheetlog",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "simple console.log to google sheets",
   "main": "index.mjs",
   "scripts": {
