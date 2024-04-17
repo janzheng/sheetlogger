@@ -26,12 +26,7 @@ class Sheet {
     // but YOLO
     if (typeof process !== 'undefined') {
       // Dynamically import dotenv if process is defined
-      import('dotenv').then(dotenv => {
-        dotenv.config();
-        this.SHEET_URL = process.env['SHEET_URL'];
-      }).catch(error => {
-        console.error('Failed to load dotenv:', error);
-      });
+      this.loadDotenv();
     } else {
       this.contentType = 'application/x-www-form-urlencoded';
       // only form types can be submitted to spreadAPI from the browser
@@ -41,23 +36,39 @@ class Sheet {
     }
 
     // Dynamically import Sqids if available
-    import('sqids').then(SqidsModule => {
-      this.sqids = new SqidsModule.default();
-    }).catch(error => {
+    this.loadSqids();
+  }
+
+
+  loadDotenv() {
+    try {
+      const { config } = require('dotenv');
+      config();
+      this.SHEET_URL = process.env['SHEET_URL'];
+    } catch (error) {
+      console.warn('dotenv not found or failed to load. Proceeding without it.');
+    }
+  }
+
+  loadSqids() {
+    try {
+      const Sqids = require('sqids');
+      this.sqids = new Sqids.default();
+    } catch (error) {
       console.warn('Sqids module not found. Proceeding without it.');
       this.useSqid = false; // Disable Sqid usage if the module is not found
-    });
+    }
   }
+
 
   setup({ sheetUrl, logPayload, useSqid, sheet, method }) {
-    this.SHEET_URL = this.SHEET_URL || sheetUrl;
-    this.logPayload = logPayload || this.logPayload;
-    // this.concurrency = concurrency || this.concurrency;
-    this.useSqid = useSqid || this.useSqid;
-    this.sheet = sheet || this.sheet;
-    this.method = method || this.method;
+    this.SHEET_URL = sheetUrl !== undefined ? sheetUrl : this.SHEET_URL;
+    this.logPayload = logPayload !== undefined ? logPayload : this.logPayload;
+    this.useSqid = useSqid !== undefined ? useSqid : this.useSqid;
+    this.sheet = sheet !== undefined ? sheet : this.sheet;
+    this.method = method !== undefined ? method : this.method;
   }
-
+  
   async log(payload, { sheet, sheetUrl, sqid, method, id, idColumn } = {}) {
     // const semaAdd = new Sema(this.concurrency);
     sheet = sheet || this.sheet;
@@ -109,8 +120,8 @@ class Sheet {
   }
 
   async add(payload, options = {}) {
-    // .add uses DYNAMIC_POST which can add new columns if they don't already exist
-    return this.log(payload, { ...options, method: "DYNAMIC_POST" });
+    // Directly call log without modifications, making it easier to remember
+    return this.log(payload, options);
   }
 
   async find(idColumn, id, returnAllMatches = false) {
