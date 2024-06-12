@@ -46,7 +46,7 @@ class Sheet {
       config();
       this.SHEET_URL = process.env['SHEET_URL'];
     } catch (error) {
-      console.warn('dotenv not found or failed to load. Proceeding without it.');
+      // console.warn('dotenv not found or failed to load. Proceeding without it.');
     }
   }
 
@@ -55,7 +55,7 @@ class Sheet {
       const Sqids = require('sqids');
       this.sqids = new Sqids.default();
     } catch (error) {
-      console.warn('Sqids module not found. Proceeding without it.');
+      // console.warn('Sqids module not found. Proceeding without it.');
       this.useSqid = false; // Disable Sqid usage if the module is not found
     }
   }
