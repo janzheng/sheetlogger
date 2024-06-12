@@ -14,7 +14,7 @@
 class Sheet {
   constructor() {
     this.loud = false
-    this.logPayload = true;
+    this.logPayload = false;
     // this.concurrency = 2; // not implemented
     this.useSqid = false;
     this.contentType = 'application/json';
