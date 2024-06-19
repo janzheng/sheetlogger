@@ -7,7 +7,6 @@
 */
 
 // import { Sema } from 'async-sema'
-// import Sqids from 'sqids'
 // import dotenv from 'dotenv'
 
 
@@ -16,7 +15,6 @@ class Sheet {
     this.loud = false
     this.logPayload = false;
     // this.concurrency = 2; // not implemented
-    this.useSqid = false;
     this.contentType = 'application/json';
     this.sheet = "Logs";
     this.method = "POST";
@@ -35,8 +33,6 @@ class Sheet {
       }
     }
 
-    // Dynamically import Sqids if available
-    this.loadSqids();
   }
 
 
@@ -50,35 +46,19 @@ class Sheet {
     }
   }
 
-  loadSqids() {
-    try {
-      const Sqids = require('sqids');
-      this.sqids = new Sqids.default();
-    } catch (error) {
-      // console.warn('Sqids module not found. Proceeding without it.');
-      this.useSqid = false; // Disable Sqid usage if the module is not found
-    }
-  }
-
-
-  setup({ sheetUrl, logPayload, useSqid, sheet, method }) {
+  setup({ sheetUrl, logPayload, sheet, method }) {
     this.SHEET_URL = sheetUrl !== undefined ? sheetUrl : this.SHEET_URL;
     this.logPayload = logPayload !== undefined ? logPayload : this.logPayload;
-    this.useSqid = useSqid !== undefined ? useSqid : this.useSqid;
     this.sheet = sheet !== undefined ? sheet : this.sheet;
     this.method = method !== undefined ? method : this.method;
   }
   
-  async log(payload, { sheet, sheetUrl, sqid, method, id, idColumn } = {}) {
+  async log(payload, { sheet, sheetUrl, method, id, idColumn, ...rest } = {}) {
     // const semaAdd = new Sema(this.concurrency);
     sheet = sheet || this.sheet;
     let data;
     // await semaAdd.acquire();
     try {
-      if (this.useSqid) {
-        sqid = sqid || [new Date().getTime()]
-        payload['sqid'] = this.useSqid && this.sqids.encode(sqid);
-      }
 
       if (!this.SHEET_URL && !sheetUrl) {
         throw new Error('SHEET_URL not set');
@@ -89,6 +69,7 @@ class Sheet {
         "method": method || this.method,
         "sheet": sheet,
         "payload": payload,
+        ...rest
       }
       if(id) bodyObject.id = id;
       if(idColumn) bodyObject.idColumn = idColumn;
