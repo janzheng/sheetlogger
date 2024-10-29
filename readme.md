@@ -1,12 +1,13 @@
-# Sheet.log
+# SheetLogs
 
-Sheet.log is a simple console.log-like logger — think Sentry — to Google Sheets with a modified [SpreadAPI script](https://spreadapi.roombelt.com/).
+SheetLogs is a simple wrapper to add to and read from Google Sheets.
 
-This is ideal for projects and prototypes where Sentry is too heavy, and you just want a semi-public log dump. Google Sheets is great because they have filtering, formulas, graphing, and more stuff built in. 
+It can be used to easily save data like logs or form responses to Google Sheets, turning Sheets into simple databases.
 
-Google Sheets supports up to roughly 200,000 cells per sheet (I think), which makes sheet.log perfect for toy projects and MVPs that need a faux, persisted "database"
+Since Sheets supports up to roughly 200,000 cells per sheet, this makes SheetLogs perfect for toy projects and MVPs that need a "faux", persisted "database".
 
-Sheet.log is built on top of the excellent [SpreadAPI](https://spreadapi.roombelt.com/) library, which is a Google Apps Script library that turns any Google Sheets into a data store.
+SheetLogs is built on top of the excellent [SpreadAPI](https://spreadapi.roombelt.com/) library, which is a Google Apps Script library that turns any Google Sheets into a data store.
+
 
 ## Installation
 
@@ -28,121 +29,158 @@ To start logging data to your Google Sheet:
 
 ```javascript
 import sheet from '@yawnxyz/sheetlog';
-sheet.log({Name: "First Name"});
+
+// initialize the sheet
+const testSheet = new SheetLogs({
+  sheetUrl: "https://script.google.com/macros/s/AKfycby41wlkjusaKDYebYCGMiACdomPVjcsXr56wdONy8nDtvu--Zewdn28PZ6Lx7I1fni3/exec",
+  sheet: "testSheet"
+});
+
+let result = await testSheet.log({
+  Name: "test"
+})
+
 ```
 
-This appends all data to the `Logs` tab, and requires a column named `Name` to exist.
+This adds the data to the `Name` column of the `testSheet`. 
+
 
 ### Basic Methods
 
 #### .log(payload, options)
-The `.log` function is used to log data to the specified sheet. It accepts the following parameters:
-- `payload`: The data to be logged.
-- `options`: An object containing additional options such as `sheet`, `sheetUrl`, `sqid`, `method`, `id`, and `idColumn`.
+The `.log` function is the core method used to interact with the sheet. It accepts:
+- `payload`: The data to be logged (object or array)
+- `options`: Configuration object including:
+  - `sheet`: Sheet name (defaults to "Logs")
+  - `sheetUrl`: Optional custom sheet URL
+  - `method`: Request method (defaults to "POST")
+  - `id`: Row ID for operations like GET/PUT
+  - `idColumn`: Column name for UPSERT operations
+  - Additional parameters specific to each method
 
 Example:
 ```javascript
 const payload = { name: 'John', age: 30 };
-const options = { sheet: 'Users', method: 'POST' };
-sheet.log(payload, options);
+await sheet.log(payload, { 
+  sheet: 'Users'
+});
 ```
 
-#### .get(options)
-The `.get` function is used to retrieve data from the specified sheet. It supports various query options including pagination, sorting, and filtering.
+#### .get(id, options)
+Retrieves data from the sheet. Can fetch single rows or multiple with pagination.
 
-Example of basic get:
+Example of single row:
 ```javascript
-const options = {
+// Get row with ID 123
+const row = await sheet.get(123);
+```
+
+Example of multiple rows:
+```javascript
+// Get multiple rows with options
+const rows = await sheet.get(null, {
+  method: "GET",
   limit: 10,
   start_id: 100,
   order: "desc"
-};
-sheet.get(options);
-```
-
-Example of get with `_id`:
-```javascript
-sheet.get(123); // Fetches the row with ID 123
-```
-
-#### .update(payload, options)
-The `.update` function is used to update existing data in the specified sheet. It accepts the same parameters as `.log` and sets the method to "UPSERT".
-
-Example:
-```javascript
-const payload = { id: 123, name: 'Jane', age: 25 };
-const options = { sheet: 'Users' };
-sheet.update(payload, options);
-```
-
-#### .add(payload, options)
-The `.add` function is used to add new data to the specified sheet. It accepts the same parameters as `.log`, but turns any new keys in the object into columns.
-
-Example:
-```javascript
-const payload = { name: 'Alice', age: 28 };
-const options = { sheet: 'Users' };
-sheet.add(payload, options);
-```
-
-#### .find(idColumn, id, returnAllMatches)
-The `.find` function is used to find data in the specified sheet based on the provided `idColumn` and `id`. It accepts the `idColumn`, `id`, and `returnAllMatches` parameters.
-
-This method returns an object, but setting `returnAllMatches=true` will instead return an array of all matches.
-
-Example:
-```javascript
-const idColumn = 'id';
-const id = 123;
-const returnAllMatches = true;
-sheet.find(idColumn, id, returnAllMatches);
-```
-
-#### Pagination
-```javascript
-sheet.log(payload, {
-  method: "PAGINATED_GET",
-  limit: 20,
-  cursor: "100",
-  sortBy: "timestamp",
-  sortDir: "desc"
 });
 ```
 
-#### Bulk Operations
-```javascript
-// Batch Update
-sheet.log(payload, {
-  method: "BATCH_UPDATE",
-  payload: [
-    { _id: 1, status: "complete" },
-    { _id: 2, status: "pending" }
-  ]
-});
+#### .post(payload, options)
+Creates new rows in the sheet. Automatically adds timestamp in "Date Modified" column.
 
-// Bulk Delete
-sheet.log(null, {
-  method: "BULK_DELETE",
-  ids: [1, 2, 3, 4]
+```javascript
+const result = await sheet.post({ 
+  name: 'Jane',
+  email: 'jane@example.com'
+}, {
+  sheet: 'Users'
 });
 ```
 
-#### Aggregation
+#### .upsert(idColumn, id, payload, options)
+Updates existing row or creates new one if not found. Uses specified column as unique identifier.
+
 ```javascript
-sheet.log(null, {
-  method: "AGGREGATE",
-  sheet: "sales",
-  column: "amount",
-  operation: "sum" // Available: sum, avg, min, max, count
+const result = await sheet.upsert(
+  'email',                    // idColumn
+  'jane@example.com',        // id
+  { status: 'active' },      // payload
+  { sheet: 'Users' }         // options
+);
+```
+
+#### .find(idColumn, id, returnAllMatches, options)
+Searches for rows matching the specified criteria. Returns single object or array based on returnAllMatches.
+
+```javascript
+// Find single match
+const user = await sheet.find(
+  'email',                    // idColumn
+  'jane@example.com',        // id
+  false                      // returnAllMatches
+);
+
+// Find all matches
+const users = await sheet.find(
+  'status',                  // idColumn
+  'active',                  // id
+  true                      // returnAllMatches
+);
+```
+
+#### .dynamicPost(payload, options)
+Adds new rows and automatically creates new columns for any new fields in the payload.
+
+```javascript
+const result = await sheet.dynamicPost({
+  name: 'Alice',
+  newField: 'value',      // Creates column if doesn't exist
+  nested: { foo: 'bar' }  // Will be JSON stringified
+}, {
+  sheet: 'Users'
 });
 ```
 
-#### Data Export
+#### .paginatedGet(options)
+Provides cursor-based pagination for large datasets.
+
 ```javascript
-sheet.log(null, {
-  method: "EXPORT",
-  format: "csv" // or "json"
+const results = await sheet.paginatedGet({
+  cursor: "100",           // Starting point
+  limit: 20,              // Items per page
+  sortBy: "Date Modified", // Sort column
+  sortDir: "desc",        // Sort direction
+  sheet: "Users"
 });
+```
+
+#### .rangeUpdate(data, options)
+Efficiently updates multiple cells in a range.
+
+```javascript
+const result = await sheet.rangeUpdate([
+  ["A1", "B1", "C1"],
+  ["A2", "B2", "C2"]
+], {
+  sheet: "Users",
+  startRow: 2,
+  startCol: 3
+});
+```
+
+#### .aggregate(column, operation, options)
+Performs calculations on numeric columns.
+
+```javascript
+const result = await sheet.aggregate(
+  "amount",           // column
+  "sum",             // operation: sum, avg, min, max, count
+  {
+    sheet: "Sales",
+    where: { status: "completed" }
+  }
+);
 ```
 
 ### Column Management
@@ -166,44 +204,6 @@ sheet.log(null, {
   method: "REMOVE_COLUMN",
   columnName: "columnToRemove"
 });
-```
-
-### Retrieve Specific Rows
-
-You can retrieve specific rows from a Google Sheet using the `GET_ROWS` method. This method allows you to specify a range of rows to fetch.
-
-**Parameters:**
-- `sheet`: The name of the sheet.
-- `startRow`: The starting row number (1-indexed).
-- `endRow`: (Optional) The ending row number. If not provided, only the `startRow` will be retrieved.
-
-**Example:**
-```javascript
-{
-  method: "GET_ROWS",
-  sheet: "logs",
-  startRow: 2,
-  endRow: 5
-}
-```
-
-### Retrieve Specific Columns
-
-You can retrieve specific columns from a Google Sheet using the `GET_COLUMNS` method. This method allows you to specify a range of columns to fetch by their letter or number.
-
-**Parameters:**
-- `sheet`: The name of the sheet.
-- `startColumn`: The starting column identifier (e.g., "A", "G", or 1).
-- `endColumn`: (Optional) The ending column identifier. If not provided, only the `startColumn` will be retrieved.
-
-**Example:**
-```javascript
-{
-  method: "GET_COLUMNS",
-  sheet: "logs",
-  startColumn: "A",
-  endColumn: "C"
-}
 ```
 
 
@@ -267,6 +267,18 @@ Keys must be:
 
 ## Available Methods
 
+To run these folllowing methods, set the `method` key in the payload for the desired method when using `sheet.log()`.
+
+For example, to run `GET_ROWS`:
+```javascript
+sheet.log(null, {
+  method: "GET_ROWS",
+    sheet: "testSheet",
+    startRow: 1,
+    endRow: 9099
+});
+```
+
 | Method | Description |
 |--------|-------------|
 | GET | Fetch single or multiple rows |
@@ -284,6 +296,46 @@ Keys must be:
 | EXPORT | Export data in different formats |
 | AGGREGATE | Perform calculations on columns |
 | BATCH_UPDATE | Update multiple rows efficiently |
+
+
+### Retrieve Specific Rows
+
+You can retrieve specific rows from a Google Sheet using the `GET_ROWS` method. This method allows you to specify a range of rows to fetch.
+
+**Parameters:**
+- `sheet`: The name of the sheet.
+- `startRow`: The starting row number (1-indexed).
+- `endRow`: (Optional) The ending row number. If not provided, only the `startRow` will be retrieved.
+
+**Example:**
+```javascript
+{
+  method: "GET_ROWS",
+  sheet: "logs",
+  startRow: 2,
+  endRow: 5
+}
+```
+
+### Retrieve Specific Columns
+
+You can retrieve specific columns from a Google Sheet using the `GET_COLUMNS` method. This method allows you to specify a range of columns to fetch by their letter or number.
+
+**Parameters:**
+- `sheet`: The name of the sheet.
+- `startColumn`: The starting column identifier (e.g., "A", "G", or 1).
+- `endColumn`: (Optional) The ending column identifier. If not provided, only the `startColumn` will be retrieved.
+
+**Example:**
+```javascript
+{
+  method: "GET_COLUMNS",
+  sheet: "logs",
+  startColumn: "A",
+  endColumn: "C"
+}
+```
+
 
 ## Method Index & Examples
 

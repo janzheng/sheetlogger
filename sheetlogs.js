@@ -913,8 +913,17 @@ class SheetLogsScript {
     const lastRow = sheet.getLastRow();
     const lastColumn = sheet.getLastColumn();
 
-    if (startRow < 1 || endRow > lastRow || startRow > endRow) {
-      return []; // Return empty if out of range
+    // If startRow is invalid, return empty
+    if (startRow < 1) {
+      return [];
+    }
+
+    // Clamp endRow to lastRow if it exceeds it
+    endRow = Math.min(endRow, lastRow);
+    
+    // If startRow is now greater than adjusted endRow, return empty
+    if (startRow > endRow) {
+      return [];
     }
 
     return sheet.getRange(startRow, 1, endRow - startRow + 1, lastColumn).getValues();
@@ -922,10 +931,19 @@ class SheetLogsScript {
 
   getColumns(sheet, startIdentifier, endIdentifier = startIdentifier) {
     const startIndex = this.getColumnIndex(startIdentifier);
-    const endIndex = this.getColumnIndex(endIdentifier);
+    const lastColumn = sheet.getLastColumn();
 
-    if (startIndex < 1 || endIndex > sheet.getLastColumn() || startIndex > endIndex) {
-      return []; // Return empty if out of range
+    // If startIndex is invalid, return empty
+    if (startIndex < 1) {
+      return [];
+    }
+
+    // Convert endIdentifier to index and clamp to lastColumn
+    const endIndex = Math.min(this.getColumnIndex(endIdentifier), lastColumn);
+    
+    // If startIndex is now greater than adjusted endIndex, return empty
+    if (startIndex > endIndex) {
+      return [];
     }
 
     return sheet.getRange(1, startIndex, sheet.getLastRow(), endIndex - startIndex + 1).getValues();

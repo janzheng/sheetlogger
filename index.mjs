@@ -6,12 +6,13 @@
 */
 
 class SheetLogs {
-  constructor() {
+  constructor({ sheetUrl, logPayload, sheet, method } = {}) {
     this.loud = false;
-    this.logPayload = false;
+    this.logPayload = logPayload ?? false;
     this.contentType = 'application/json';
-    this.sheet = "Logs";
-    this.method = "POST";
+    this.sheet = sheet ?? "Logs";
+    this.method = method ?? "POST";
+    this.SHEET_URL = sheetUrl;
 
     if (typeof process !== 'undefined') {
       this.loadDotenv();
@@ -215,6 +216,7 @@ class SheetLogs {
     });
   }
 }
+
 
 const SheetLogsSchemas = {
   get: {
