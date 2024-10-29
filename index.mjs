@@ -1,4 +1,3 @@
-
 /* 
 
   payload can be an object or an array of objects of any schema
@@ -6,35 +5,24 @@
 
 */
 
-// import { Sema } from 'async-sema'
-// import dotenv from 'dotenv'
 
-
-class Sheet {
+class SheetLogs {
   constructor() {
-    this.loud = false
+    this.loud = false;
     this.logPayload = false;
-    // this.concurrency = 2; // not implemented
     this.contentType = 'application/json';
     this.sheet = "Logs";
     this.method = "POST";
 
-    // doing all this so we can use this on the browser
-    // which is NOT SAFE since the URL is exposed
-    // but YOLO
     if (typeof process !== 'undefined') {
-      // Dynamically import dotenv if process is defined
       this.loadDotenv();
     } else {
       this.contentType = 'application/x-www-form-urlencoded';
-      // only form types can be submitted to spreadAPI from the browser
       if (this.loud) {
         console.log('Browser mode: set a custom sheetUrl');
       }
     }
-
   }
-
 
   loadDotenv() {
     try {
@@ -52,14 +40,11 @@ class Sheet {
     this.sheet = sheet !== undefined ? sheet : this.sheet;
     this.method = method !== undefined ? method : this.method;
   }
-  
+
   async log(payload, { sheet, sheetUrl, method, id, idColumn, ...rest } = {}) {
-    // const semaAdd = new Sema(this.concurrency);
     sheet = sheet || this.sheet;
     let data;
-    // await semaAdd.acquire();
     try {
-
       if (!this.SHEET_URL && !sheetUrl) {
         throw new Error('SHEET_URL not set');
         return;
@@ -70,21 +55,20 @@ class Sheet {
         "sheet": sheet,
         "payload": payload,
         ...rest
-      }
-      if(id) bodyObject.id = id;
-      if(idColumn) bodyObject.idColumn = idColumn;
+      };
+      if (id) bodyObject.id = id;
+      if (idColumn) bodyObject.idColumn = idColumn;
 
       const response = await fetch(this.SHEET_URL || sheetUrl, {
         method: 'POST',
         headers: {
-          // 'Content-Type': 'application/json'
           'Content-Type': 'application/x-www-form-urlencoded'
         },
         body: JSON.stringify(bodyObject)
-      })
+      });
 
       try {
-        data = await response.json()
+        data = await response.json();
       } catch (e) { }
       if (this.logPayload) {
         console.log(bodyObject);
@@ -95,22 +79,153 @@ class Sheet {
     return data;
   }
 
-  async update(payload, options = {}) {
-    // Set the method to "UPSERT" and pass all other options through
-    return this.log(payload, { ...options, method: "UPSERT" });
+  // Wrapper methods for each case in sheetlogs.js
+  async get(id, options = {}) {
+    return this.log({}, { ...options, method: "GET", id });
   }
 
-  async add(payload, options = {}) {
-    // Directly call log without modifications, making it easier to remember
-    return this.log(payload, options);
+  async paginatedGet(options = {}) {
+    return this.log({}, { ...options, method: "PAGINATED_GET" });
   }
 
-  async find(idColumn, id, returnAllMatches = false) {
-    // Directly pass the method "FIND" and the specific parameters
-    return this.log({}, { idColumn, id, returnAllMatches, method: "FIND" });
+  async post(payload, options = {}) {
+    return this.log(payload, { ...options, method: "POST" });
+  }
+
+  async batchUpdate(payload, options = {}) {
+    return this.log(payload, { ...options, method: "BATCH_UPDATE" });
+  }
+
+  async bulkDelete(ids, options = {}) {
+    return this.log({}, { ...options, method: "BULK_DELETE", ids });
+  }
+
+  async aggregate(column, operation, options = {}) {
+    return this.log({}, { ...options, method: "AGGREGATE", column, operation });
+  }
+
+  async exportData(format, options = {}) {
+    return this.log({}, { ...options, method: "EXPORT", format });
+  }
+
+  async upsert(idColumn, id, payload, options = {}) {
+    return this.log(payload, { ...options, method: "UPSERT", idColumn, id });
+  }
+
+  async dynamicPost(payload, options = {}) {
+    return this.log(payload, { ...options, method: "DYNAMIC_POST" });
+  }
+
+  async put(id, payload, options = {}) {
+    return this.log(payload, { ...options, method: "PUT", id });
+  }
+
+  async delete(id, options = {}) {
+    return this.log({}, { ...options, method: "DELETE", id });
+  }
+
+  async addColumn(columnName, options = {}) {
+    return this.log({}, { ...options, method: "ADD_COLUMN", columnName });
+  }
+
+  async editColumn(oldColumnName, newColumnName, options = {}) {
+    return this.log({}, { ...options, method: "EDIT_COLUMN", oldColumnName, newColumnName });
+  }
+
+  async removeColumn(columnName, options = {}) {
+    return this.log({}, { ...options, method: "REMOVE_COLUMN", columnName });
+  }
+
+  async find(idColumn, id, returnAllMatches = false, options = {}) {
+    return this.log({}, { ...options, method: "FIND", idColumn, id, returnAllMatches });
+  }
+
+  async rangeUpdate(data, { sheet, startRow, startCol, ...options } = {}) {
+    return this.log(data, { 
+      ...options, 
+      method: "RANGE_UPDATE",
+      sheet,
+      startRow,
+      startCol
+    });
+  }
+
+  async getRows({ startRow, endRow, sheet, ...options } = {}) {
+    return this.log({}, {
+      ...options,
+      method: "GET_ROWS",
+      sheet,
+      startRow,
+      endRow
+    });
+  }
+
+  async getColumns({ startColumn, endColumn, sheet, ...options } = {}) {
+    return this.log({}, {
+      ...options,
+      method: "GET_COLUMNS",
+      sheet,
+      startColumn,
+      endColumn
+    });
+  }
+
+  async getAllCells(options = {}) {
+    return this.log({}, {
+      ...options,
+      method: "GET_ALL_CELLS"
+    });
+  }
+
+  async export({ format = 'json', sheet, ...options } = {}) {
+    return this.log({}, {
+      ...options,
+      method: "EXPORT",
+      sheet,
+      format
+    });
+  }
+
+  async aggregate(column, operation, { where, sheet, ...options } = {}) {
+    return this.log({}, {
+      ...options,
+      method: "AGGREGATE",
+      sheet,
+      column,
+      operation,
+      where
+    });
+  }
+
+  async paginatedGet({ cursor, limit = 10, sortBy = 'Date Modified', sortDir = 'desc', sheet, ...options } = {}) {
+    return this.log({}, {
+      ...options,
+      method: "PAGINATED_GET",
+      sheet,
+      cursor,
+      limit,
+      sortBy,
+      sortDir
+    });
+  }
+
+  async batchUpdate(updates, { sheet, ...options } = {}) {
+    return this.log(updates, {
+      ...options,
+      method: "BATCH_UPDATE",
+      sheet
+    });
+  }
+
+  async dynamicPost(payload, { sheet, ...options } = {}) {
+    return this.log(payload, {
+      ...options,
+      method: "DYNAMIC_POST",
+      sheet
+    });
   }
 }
 
-export { Sheet };
-export default new Sheet();
+export { SheetLogs };
+export default new SheetLogs();
 
