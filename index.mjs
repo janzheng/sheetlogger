@@ -5,7 +5,6 @@
 
 */
 
-
 class SheetLogs {
   constructor() {
     this.loud = false;
@@ -17,7 +16,7 @@ class SheetLogs {
     if (typeof process !== 'undefined') {
       this.loadDotenv();
     } else {
-      this.contentType = 'application/x-www-form-urlencoded';
+      this.contentType = 'application/json';
       if (this.loud) {
         console.log('Browser mode: set a custom sheetUrl');
       }
@@ -59,13 +58,19 @@ class SheetLogs {
       if (id) bodyObject.id = id;
       if (idColumn) bodyObject.idColumn = idColumn;
 
+      console.log(" >>>>> fetch log", this.SHEET_URL, bodyObject);
       const response = await fetch(this.SHEET_URL || sheetUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': this.contentType
         },
         body: JSON.stringify(bodyObject)
       });
+
+      if (!response.ok) {
+        console.error("fetch log error", response);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       try {
         data = await response.json();
@@ -84,24 +89,13 @@ class SheetLogs {
     return this.log({}, { ...options, method: "GET", id });
   }
 
-  async paginatedGet(options = {}) {
-    return this.log({}, { ...options, method: "PAGINATED_GET" });
-  }
-
   async post(payload, options = {}) {
     return this.log(payload, { ...options, method: "POST" });
   }
 
-  async batchUpdate(payload, options = {}) {
-    return this.log(payload, { ...options, method: "BATCH_UPDATE" });
-  }
 
   async bulkDelete(ids, options = {}) {
     return this.log({}, { ...options, method: "BULK_DELETE", ids });
-  }
-
-  async aggregate(column, operation, options = {}) {
-    return this.log({}, { ...options, method: "AGGREGATE", column, operation });
   }
 
   async exportData(format, options = {}) {
@@ -110,10 +104,6 @@ class SheetLogs {
 
   async upsert(idColumn, id, payload, options = {}) {
     return this.log(payload, { ...options, method: "UPSERT", idColumn, id });
-  }
-
-  async dynamicPost(payload, options = {}) {
-    return this.log(payload, { ...options, method: "DYNAMIC_POST" });
   }
 
   async put(id, payload, options = {}) {
@@ -141,8 +131,8 @@ class SheetLogs {
   }
 
   async rangeUpdate(data, { sheet, startRow, startCol, ...options } = {}) {
-    return this.log(data, { 
-      ...options, 
+    return this.log(data, {
+      ...options,
       method: "RANGE_UPDATE",
       sheet,
       startRow,
