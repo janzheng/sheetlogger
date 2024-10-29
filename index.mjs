@@ -59,7 +59,6 @@ class Sheetlog {
       if (id) bodyObject.id = id;
       if (idColumn) bodyObject.idColumn = idColumn;
 
-      console.log(" >>>>> fetch log", this.SHEET_URL, bodyObject);
       const response = await fetch(this.SHEET_URL || sheetUrl, {
         method: 'POST',
         headers: {
