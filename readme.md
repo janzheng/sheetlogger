@@ -6,6 +6,8 @@ It can be used to easily save data like logs or form responses to Google Sheets,
 
 Since Sheets supports up to roughly 200,000 cells per sheet, this makes Sheetlog perfect for toy projects and MVPs that need a "faux", persisted "database". Think of it as a lighter alternative to Notion Database or Airtable, as opposed to something like Firebase or Supabase.
 
+The Google Sheets API is prone to rate limiting and slow cold starts, so is not ideal for high-traffic or fast applications.
+
 Sheetlog is built on top of the excellent [SpreadAPI](https://spreadapi.roombelt.com/) library, which is a Google Apps Script library that turns any Google Sheets into a data store.
 
 
@@ -14,8 +16,8 @@ Sheetlog is built on top of the excellent [SpreadAPI](https://spreadapi.roombelt
 1. Install package: `yarn add --dev @yawnxyz/sheetlog`
 2. Create a Google Sheet
 3. Follow the [installation instructions for SpreadAPI](https://spreadapi.roombelt.com/setup)
-4. Replace the default script with the custom script (spreadapi-custom.js) in this repo
-5. Make sure to change the appropriate authentication for your app!!
+4. Replace the default script with the custom script (`sheetlog.js`) in this repo
+5. Make sure to change the appropriate authentication for your app — the default is fully open.
 6. Deploy the app per installation instructions, and get the custom URL.
 7. Set that URL to .env.SHEET_URL to your deployed SpreadAPI Apps Script, or with `sheet.setup({sheetUrl: "some url"})`
 8. Create a new Google Sheets tab named "Logs"
