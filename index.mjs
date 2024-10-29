@@ -135,8 +135,8 @@ class SheetLogs {
       ...options,
       method: "RANGE_UPDATE",
       sheet,
-      startRow,
-      startCol
+      startRow: startRow || 1,
+      startCol: startCol || 1
     });
   }
 
@@ -145,8 +145,8 @@ class SheetLogs {
       ...options,
       method: "GET_ROWS",
       sheet,
-      startRow,
-      endRow
+      startRow: startRow || 1,
+      endRow: endRow || 100
     });
   }
 
@@ -155,8 +155,8 @@ class SheetLogs {
       ...options,
       method: "GET_COLUMNS",
       sheet,
-      startColumn,
-      endColumn
+      startColumn: startColumn || 1,
+      endColumn: endColumn || 100
     });
   }
 
@@ -192,8 +192,8 @@ class SheetLogs {
       ...options,
       method: "PAGINATED_GET",
       sheet,
-      cursor,
-      limit,
+      cursor: cursor || 1,
+      limit: limit || 10,
       sortBy,
       sortDir
     });
