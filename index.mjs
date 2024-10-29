@@ -226,6 +226,546 @@ class SheetLogs {
   }
 }
 
-export { SheetLogs };
+const SheetLogsSchemas = {
+  get: {
+    input: {
+      type: "object",
+      properties: {
+        id: { 
+          oneOf: [
+            { type: "string" },
+            { type: "number" }
+          ]
+        },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["id"]
+    },
+    output: {
+      type: "object",
+      additionalProperties: true
+    }
+  },
+  paginatedGet: {
+    input: {
+      type: "object",
+      properties: {
+        cursor: { type: "string" },
+        limit: { type: "number", default: 10 },
+        sortBy: { type: "string", default: "Date Modified" },
+        sortDir: { 
+          type: "string", 
+          enum: ["asc", "desc"],
+          default: "desc"
+        },
+        sheet: { type: "string" },
+        sheetUrl: { type: "string" }
+      },
+      additionalProperties: false
+    },
+    output: {
+      type: "object",
+      properties: {
+        data: { type: "array" },
+        nextCursor: { type: "string" }
+      },
+      required: ["data"]
+    }
+  },
+  post: {
+    input: {
+      type: "object",
+      properties: {
+        payload: {
+          oneOf: [
+            { type: "object" },
+            { 
+              type: "array",
+              items: { type: "object" }
+            }
+          ]
+        },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          }
+        }
+      },
+      required: ["payload"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" },
+        id: { type: "string" }
+      },
+      required: ["success"]
+    }
+  },
+  batchUpdate: {
+    input: {
+      type: "object",
+      properties: {
+        updates: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: {
+                oneOf: [
+                  { type: "string" },
+                  { type: "number" }
+                ]
+              },
+              data: { type: "object" }
+            },
+            required: ["id", "data"]
+          }
+        }
+      },
+      required: ["updates"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" },
+        updatedCount: { type: "number" }
+      },
+      required: ["success", "updatedCount"]
+    }
+  },
+  bulkDelete: {
+    input: {
+      type: "object",
+      properties: {
+        ids: {
+          type: "array",
+          items: {
+            oneOf: [
+              { type: "string" },
+              { type: "number" }
+            ]
+          }
+        },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["ids"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" },
+        deletedCount: { type: "number" }
+      },
+      required: ["success", "deletedCount"]
+    }
+  },
+  aggregate: {
+    input: {
+      type: "object",
+      properties: {
+        column: { type: "string" },
+        operation: { 
+          type: "string",
+          enum: ["sum", "avg", "count", "min", "max"]
+        },
+        where: { 
+          type: "object",
+          additionalProperties: true
+        },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["column", "operation"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        result: { type: "number" }
+      },
+      required: ["result"]
+    }
+  },
+  upsert: {
+    input: {
+      type: "object",
+      properties: {
+        idColumn: { type: "string" },
+        id: {
+          oneOf: [
+            { type: "string" },
+            { type: "number" }
+          ]
+        },
+        payload: { type: "object" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["idColumn", "id", "payload"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" },
+        action: {
+          type: "string",
+          enum: ["insert", "update"]
+        }
+      },
+      required: ["success", "action"]
+    }
+  },
+  dynamicPost: {
+    input: {
+      type: "object",
+      properties: {
+        payload: {
+          oneOf: [
+            { type: "object" },
+            { 
+              type: "array",
+              items: { type: "object" }
+            }
+          ]
+        },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["payload"]
+    },
+    output: {
+      type: "object",
+      additionalProperties: true
+    }
+  },
+  put: {
+    input: {
+      type: "object",
+      properties: {
+        id: {
+          oneOf: [
+            { type: "string" },
+            { type: "number" }
+          ]
+        },
+        payload: { type: "object" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["id", "payload"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" }
+      },
+      required: ["success"]
+    }
+  },
+  delete: {
+    input: {
+      type: "object",
+      properties: {
+        id: {
+          oneOf: [
+            { type: "string" },
+            { type: "number" }
+          ]
+        },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["id"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" }
+      },
+      required: ["success"]
+    }
+  },
+  addColumn: {
+    input: {
+      type: "object",
+      properties: {
+        columnName: { type: "string" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["columnName"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" }
+      },
+      required: ["success"]
+    }
+  },
+  editColumn: {
+    input: {
+      type: "object",
+      properties: {
+        oldColumnName: { type: "string" },
+        newColumnName: { type: "string" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["oldColumnName", "newColumnName"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" }
+      },
+      required: ["success"]
+    }
+  },
+  removeColumn: {
+    input: {
+      type: "object",
+      properties: {
+        columnName: { type: "string" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["columnName"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" }
+      },
+      required: ["success"]
+    }
+  },
+  find: {
+    input: {
+      type: "object",
+      properties: {
+        idColumn: { type: "string" },
+        id: {
+          oneOf: [
+            { type: "string" },
+            { type: "number" }
+          ]
+        },
+        returnAllMatches: { type: "boolean" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["idColumn", "id"]
+    },
+    output: {
+      oneOf: [
+        { type: "object" },
+        { 
+          type: "array",
+          items: { type: "object" }
+        }
+      ]
+    }
+  },
+  rangeUpdate: {
+    input: {
+      type: "object",
+      properties: {
+        data: {
+          type: "array",
+          items: {
+            type: "array",
+            items: { type: "any" }
+          }
+        },
+        startRow: { type: "number" },
+        startCol: { type: "number" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["data", "startRow", "startCol"]
+    },
+    output: {
+      type: "object",
+      properties: {
+        success: { type: "boolean" }
+      },
+      required: ["success"]
+    }
+  },
+  getRows: {
+    input: {
+      type: "object",
+      properties: {
+        startRow: { type: "number" },
+        endRow: { type: "number" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    output: {
+      type: "array",
+      items: {
+        type: "array",
+        items: { type: "any" }
+      }
+    }
+  },
+  getColumns: {
+    input: {
+      type: "object",
+      properties: {
+        startColumn: { type: "number" },
+        endColumn: { type: "number" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    output: {
+      type: "array",
+      items: {
+        type: "array",
+        items: { type: "any" }
+      }
+    }
+  },
+  getAllCells: {
+    input: {
+      type: "object",
+      properties: {
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    output: {
+      type: "array",
+      items: {
+        type: "array",
+        items: { type: "any" }
+      }
+    }
+  },
+  export: {
+    input: {
+      type: "object",
+      properties: {
+        format: {
+          type: "string",
+          enum: ["json", "csv", "xlsx"]
+        },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    output: {
+      oneOf: [
+        { type: "string" },
+        { type: "object" } // For Buffer/binary data
+      ]
+    }
+  }
+};
+
+export { SheetLogs, SheetLogsSchemas };
 export default new SheetLogs();
 
