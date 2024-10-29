@@ -1,5 +1,5 @@
 /*
- * SheetLogs - A Google Sheets Logging System
+ * Sheetlog - A Google Sheets Logging System
  * Copyright (c) 2024 Jan Zheng
  * 
  * This work is licensed under Apache License 2.0
@@ -16,7 +16,7 @@
 /*
  * Authentication Configuration Guide
  * 
- * SheetLogs supports flexible authentication patterns:
+ * Sheetlog supports flexible authentication patterns:
  * 
  * 1. Method-level permissions:
  *    - GET: Read access to fetch rows
@@ -47,7 +47,7 @@
  * 
  * Example Configuration:
  * 
- * const logger = new SheetLogs({
+ * const logger = new Sheetlog({
  *   users: [
  *     // Admin with full access
  *     {
@@ -205,7 +205,7 @@
 
 // Example configurations (commented out)
 /*
-const exampleLogger = new SheetLogs({
+const exampleLogger = new Sheetlog({
   users: [
     // Admin with full access to all sheets
     // { 
@@ -256,7 +256,7 @@ const exampleLogger = new SheetLogs({
 */
 
 
-class SheetLogsScript {
+class Sheetlogcript {
   constructor(config = {}) {
     this.users = [];
     
@@ -1016,8 +1016,8 @@ class SheetLogsScript {
 
 // Global Google Apps Script functions
 function doPost(request) {
-  // Create new SheetLogs instance with default anonymous unsafe access
-  const logger = new SheetLogsScript({
+  // Create new Sheetlog instance with default anonymous unsafe access
+  const logger = new Sheetlogcript({
     users: [
       {
         name: "anonymous",
@@ -1044,7 +1044,7 @@ function doPost(request) {
 }
 
 function doGet(e) {
-  const logger = new SheetLogsScript();
+  const logger = new Sheetlogcript();
   try {
     return httpResponse(logger.handleRequest(e.parameter));
   } catch (error) {
@@ -1076,7 +1076,7 @@ function doGet(e) {
 // }
 
 // Default configuration for prototyping
-const logger = new SheetLogsScript(); // This will use anonymous unsafe access by default
+const logger = new Sheetlogcript(); // This will use anonymous unsafe access by default
 
 function httpResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data))

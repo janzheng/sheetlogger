@@ -9,13 +9,17 @@
     "demo": "node ./demo.mjs" 
   },
   "keywords": [
-    "log",
-    "logger",
+    "database",
+    "spreadapi",
     "google",
-    "sheets"
+    "sheets",
+    "logging",
+    "spreadsheet",
+    "csv",
+    "api"
   ],
   "author": "Jan Zheng",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "async-sema": "^3.1.1",
     "dotenv": "^16.3.1"

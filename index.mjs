@@ -5,7 +5,7 @@
 
 */
 
-class SheetLogs {
+class Sheetlog {
   constructor({ sheetUrl, logPayload, sheet, method } = {}) {
     this.loud = false;
     this.logPayload = logPayload ?? false;
@@ -85,7 +85,7 @@ class SheetLogs {
     return data;
   }
 
-  // Wrapper methods for each case in sheetlogs.js
+  // Wrapper methods for each case in sheetlog.js
   async get(id, options = {}) {
     return this.log({}, { ...options, method: "GET", id });
   }
@@ -218,7 +218,7 @@ class SheetLogs {
 }
 
 
-const SheetLogsSchemas = {
+const SheetlogSchema = {
   get: {
     input: {
       type: "object",
@@ -758,6 +758,6 @@ const SheetLogsSchemas = {
   }
 };
 
-export { SheetLogs, SheetLogsSchemas };
-export default new SheetLogs();
+export { Sheetlog, SheetlogSchema };
+export default new Sheetlog();
 

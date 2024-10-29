@@ -1,12 +1,12 @@
-# SheetLogs
+# Sheetlog
 
-SheetLogs is a simple wrapper to add to and read from Google Sheets.
+Sheetlog is a simple wrapper to add to and read from Google Sheets.
 
 It can be used to easily save data like logs or form responses to Google Sheets, turning Sheets into simple databases.
 
-Since Sheets supports up to roughly 200,000 cells per sheet, this makes SheetLogs perfect for toy projects and MVPs that need a "faux", persisted "database".
+Since Sheets supports up to roughly 200,000 cells per sheet, this makes Sheetlog perfect for toy projects and MVPs that need a "faux", persisted "database".
 
-SheetLogs is built on top of the excellent [SpreadAPI](https://spreadapi.roombelt.com/) library, which is a Google Apps Script library that turns any Google Sheets into a data store.
+Sheetlog is built on top of the excellent [SpreadAPI](https://spreadapi.roombelt.com/) library, which is a Google Apps Script library that turns any Google Sheets into a data store.
 
 
 ## Installation
@@ -31,7 +31,7 @@ To start logging data to your Google Sheet:
 import sheet from '@yawnxyz/sheetlog';
 
 // initialize the sheet
-const testSheet = new SheetLogs({
+const testSheet = new Sheetlog({
   sheetUrl: "https://script.google.com/macros/s/AKfycby41wlkjusaKDYebYCGMiACdomPVjcsXr56wdONy8nDtvu--Zewdn28PZ6Lx7I1fni3/exec",
   sheet: "testSheet"
 });
@@ -222,10 +222,10 @@ sheet.log(null, {
 
 ## Authentication
 
-SheetLogs supports flexible authentication patterns:
+Sheetlog supports flexible authentication patterns:
 
 ```javascript
-const logger = new SheetLogs({
+const logger = new Sheetlog({
   users: [
     // Admin with full access
     {
