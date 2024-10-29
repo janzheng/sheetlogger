@@ -4,7 +4,7 @@ Sheetlog is a simple wrapper to add to and read from Google Sheets.
 
 It can be used to easily save data like logs or form responses to Google Sheets, turning Sheets into simple databases.
 
-Since Sheets supports up to roughly 200,000 cells per sheet, this makes Sheetlog perfect for toy projects and MVPs that need a "faux", persisted "database".
+Since Sheets supports up to roughly 200,000 cells per sheet, this makes Sheetlog perfect for toy projects and MVPs that need a "faux", persisted "database". Think of it as a lighter alternative to Notion Database or Airtable, as opposed to something like Firebase or Supabase.
 
 Sheetlog is built on top of the excellent [SpreadAPI](https://spreadapi.roombelt.com/) library, which is a Google Apps Script library that turns any Google Sheets into a data store.
 
