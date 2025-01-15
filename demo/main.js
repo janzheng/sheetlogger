@@ -49,6 +49,7 @@ const html = `
     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
       <p>Sheetlog is a library for logging and retrieving data from Google Sheets. It is designed to be easy to use and integrate into existing projects.</p>
       <p>Github repo: <a class="text-blue-500 hover:underline" href="https://github.com/janzheng/sheetlog">https://github.com/janzheng/sheetlog</a></p>
+      <p>Live test sheet: <a class="text-blue-500 hover:underline" href="https://docs.google.com/spreadsheets/d/15XoANPN-DAyBkQlN9-s7bCaWzDNibuWTXHFCQMISVK4/edit?usp=sharing">Google Sheet</a></p>
       <p>It can either be used in Node:</p>
       
       <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto mb-4">

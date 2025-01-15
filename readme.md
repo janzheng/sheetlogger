@@ -192,6 +192,61 @@ const result = await sheet.aggregate(
 );
 ```
 
+#### .getSheets()
+Returns information about all sheets in the spreadsheet.
+
+```javascript
+const sheets = await sheet.getSheets();
+// Returns array of sheet names and metadata
+```
+
+#### .getCSV(options)
+Exports a specific sheet as CSV format.
+
+```javascript
+const csvData = await sheet.getCSV({
+  sheet: "Users"
+});
+```
+
+#### .getAllCells(options)
+Retrieves all cells and data from a specified sheet.
+
+```javascript
+const allData = await sheet.getAllCells({
+  sheet: "Users"
+});
+```
+
+#### .getColumns(options)
+Retrieves specific columns from the sheet. Can fetch single or multiple columns.
+
+```javascript
+// Get single column
+const columnData = await sheet.getColumns({
+  sheet: "Users",
+  startColumn: "B"
+});
+
+// Get range of columns
+const columnsData = await sheet.getColumns({
+  sheet: "Users",
+  startColumn: "B",
+  endColumn: "D"
+});
+```
+
+#### .getRows(options)
+Retrieves specific rows from the sheet. Can fetch single or multiple rows.
+
+```javascript
+const rows = await sheet.getRows({
+  sheet: "Users",
+  startRow: 2,    // Row 1 is typically headers
+  endRow: 10
+});
+```
+
 ### Column Management
 
 ```javascript
