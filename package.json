@@ -1,12 +1,12 @@
 {
   "name": "@yawnxyz/sheetlog",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "a google sheets logging system",
   "main": "index.mjs",
   "scripts": {
     "commit": "git add .; git commit; git push origin main",
     "pub": "npm publish --access public",
-    "demo": "node ./demo.mjs" 
+    "demo": "node ./demo.mjs"
   },
   "keywords": [
     "database",
