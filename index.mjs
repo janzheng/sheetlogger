@@ -1,9 +1,3 @@
-/* 
-
-  payload can be an object or an array of objects of any schema
-  - deeper nested JSON will be stringified in a cell, not spread across the csv
-
-*/
 
 class Sheetlog {
   constructor({ sheetUrl, logPayload, sheet, method } = {}) {

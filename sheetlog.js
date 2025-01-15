@@ -10,6 +10,12 @@
  * You may use this software according to either license.
  * For the Apache 2.0 licensed portions, you can find the full text at:
  * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+ * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -47,7 +53,7 @@
  * 
  * Example Configuration:
  * 
- * const logger = new Sheetlog({
+ * const logger = new SheetlogScript({
  *   users: [
  *     // Admin with full access
  *     {
@@ -203,9 +209,18 @@
  * }
  */
 
-// Example configurations (commented out)
+
+
+
+
+// To add better password protection for the sheet,
+// you can use the following configurations for Sheetlog in both
+// doGet() — which controls who can read the sheet and
+// doPost() — which controls who can edit/write to the sheet
+
 /*
-const exampleLogger = new Sheetlog({
+
+const defaultLogger = new Sheetlog({
   users: [
     // Admin with full access to all sheets
     // { 
@@ -255,8 +270,11 @@ const exampleLogger = new Sheetlog({
 
 */
 
+// Configuration flag for automatic timestamp updating
+const ENABLE_AUTO_TIMESTAMPS = false;
 
-class Sheetlogcript {
+
+class SheetlogScript {
   constructor(config = {}) {
     this.users = [];
     
@@ -1012,20 +1030,19 @@ class Sheetlogcript {
       });
     }
   }
+
+  error(status, code, details) {
+    return {
+      status: status,
+      error: { code: code, details: details }
+    };
+  }
 }
 
 // Global Google Apps Script functions
 function doPost(request) {
   // Create new Sheetlog instance with default anonymous unsafe access
-  const logger = new Sheetlogcript({
-    users: [
-      {
-        name: "anonymous",
-        key: { __unsafe: "" },    // No password required
-        permissions: "*"          // Full access
-      }
-    ]
-  });
+  const logger = loggers.doPostLogger;
   
   try {
     const requestData = JSON.parse(request.postData.contents);
@@ -1044,7 +1061,7 @@ function doPost(request) {
 }
 
 function doGet(e) {
-  const logger = new Sheetlogcript();
+  const logger = loggers.doGetLogger;
   try {
     return httpResponse(logger.handleRequest(e.parameter));
   } catch (error) {
@@ -1053,30 +1070,29 @@ function doGet(e) {
   }
 }
 
-// function onEdit(e) {
-//   const lastModifiedColumnIndex = 1;
-//   const range = e.range;
-//   const sheet = range.getSheet();
-//   let startRow = range.getRow();
-//   let numRows = range.getNumRows();
+function onEdit(e) {
+  if (!ENABLE_AUTO_TIMESTAMPS) return;
+  
+  const lastModifiedColumnIndex = 1;
+  const range = e.range;
+  const sheet = range.getSheet();
+  let startRow = range.getRow();
+  let numRows = range.getNumRows();
 
-//   if (startRow == 1) {
-//     startRow = 2;
-//     numRows--;
-//   }
+  if (startRow == 1) {
+    startRow = 2;
+    numRows--;
+  }
 
-//   const column = range.getColumn();
-//   if (column === lastModifiedColumnIndex) return;
+  const column = range.getColumn();
+  if (column === lastModifiedColumnIndex) return;
 
-//   const timestamp = new Date();
-//   for (let i = 0; i < numRows; i++) {
-//     const row = startRow + i;
-//     sheet.getRange(row, lastModifiedColumnIndex).setValue(timestamp);
-//   }
-// }
-
-// Default configuration for prototyping
-const logger = new Sheetlogcript(); // This will use anonymous unsafe access by default
+  const timestamp = new Date();
+  for (let i = 0; i < numRows; i++) {
+    const row = startRow + i;
+    sheet.getRange(row, lastModifiedColumnIndex).setValue(timestamp);
+  }
+}
 
 function httpResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
@@ -1122,3 +1138,117 @@ function doPost(request) {
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
  */ 
+
+// Define all logger configurations
+const loggers = {
+  
+  anonymous: new SheetlogScript({
+    users: [{
+      name: "anonymous",
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
+
+  doPostLogger: new SheetlogScript({
+    users: [{
+      name: "anonymous",
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
+
+  doGetLogger: new SheetlogScript({
+    users: [{
+      name: "anonymous",
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
+
+  admin: new SheetlogScript({
+    users: [{
+      name: "admin",
+      key: "myStr0ng!Pass",
+      permissions: "*"
+    }]
+  }),
+
+  powerUser: new SheetlogScript({
+    users: [{
+      name: "poweruser",
+      key: "P0wer!User",
+      permissions: {
+        logs: ["GET", "POST"],
+        analytics: "GET",
+        config: ["PUT", "DELETE"]
+      }
+    }]
+  }),
+
+  viewer: new SheetlogScript({
+    users: [{
+      name: "viewer", 
+      key: "V1ewer!Pass",
+      permissions: {
+        public: "GET",
+        reports: "GET"
+      }
+    }]
+  }),
+
+  writer: new SheetlogScript({
+    users: [{
+      name: "writer",
+      key: "Wr1ter!Pass",
+      permissions: {
+        submissions: "POST"
+      }
+    }]
+  }),
+
+  // Example of mixed permissions
+  mixed: new SheetlogScript({
+    users: [
+      {
+        name: "admin",
+        key: "Adm1n!Pass",
+        permissions: "*"
+      },
+      {
+        name: "viewer",
+        key: "V1ew!Only",
+        permissions: {
+          public: "GET"
+        }
+      }
+    ]
+  })
+};
+
+// Then modify doGet/doPost to use loggers.anonymous
+function doGet(e) {
+  try {
+    return httpResponse(loggers.anonymous.handleRequest(e.parameter));
+  } catch (error) {
+    Logger.log(error.message);
+    return httpResponse(error(500, 'internal_error', { message: error.message }));
+  }
+}
+
+function doPost(request) {
+  try {
+    const requestData = JSON.parse(request.postData.contents);
+    if (Array.isArray(requestData)) {
+      return httpResponse(requestData.map(params => loggers.anonymous.handleRequest(params)));
+    }
+    return httpResponse(loggers.anonymous.handleRequest(requestData));
+  } catch (e) {
+    return httpResponse(
+      error(400, "invalid_post_payload", {
+        payload: request.postData.contents,
+        type: request.postData.type
+      })
+    );
+  }
+}

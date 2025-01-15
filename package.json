@@ -1,7 +1,7 @@
 {
   "name": "@yawnxyz/sheetlog",
-  "version": "0.1.4",
-  "description": "simple console.log to google sheets",
+  "version": "0.1.5",
+  "description": "a google sheets logging system",
   "main": "index.mjs",
   "scripts": {
     "commit": "git add .; git commit; git push origin main",

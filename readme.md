@@ -52,6 +52,9 @@ This adds the data to the `Name` column of the `testSheet`.
 #### .log(payload, options)
 The `.log` function is the core method used to interact with the sheet. It accepts:
 - `payload`: The data to be logged (object or array)
+  - Can be a single object or array of objects with any schema
+  - Nested objects/arrays will be JSON stringified into a single cell, not spread across columns
+  - Example: `{ name: "John", details: { age: 30, city: "NY" } }` → "details" column will contain the stringified object
 - `options`: Configuration object including:
   - `sheet`: Sheet name (defaults to "Logs")
   - `sheetUrl`: Optional custom sheet URL
