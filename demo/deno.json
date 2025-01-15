@@ -8,5 +8,13 @@
     "serve": "deno serve --watch --allow-read --allow-env --allow-write --allow-net ./main.js",
     "test": "deno run --allow-read --allow-env --allow-write --allow-net ./test.js"
   },
-  "exports": "./main.js"
+  "exports": "./main.js",
+  "deploy": {
+    "project": "f36fade9-e8d1-4aa5-bb77-83ed1051dd77",
+    "exclude": [
+      "**/node_modules"
+    ],
+    "include": [],
+    "entrypoint": "main.js"
+  }
 }

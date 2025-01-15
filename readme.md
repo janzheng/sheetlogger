@@ -1,14 +1,18 @@
 # Sheetlog
 
-Sheetlog is a simple wrapper to add to and read from Google Sheets.
+Sheetlog is a a logging system that turns any Google Sheet into a database.
 
-It can be used to easily save data like logs or form responses to Google Sheets, turning Sheets into simple databases.
+It's very helpful for logging console data, record form responses, or store LLM outputs for evaluation outputs.
+
+It also supports authentication and full CRUD operations, turning your Google Sheet into a full-fledged database.
 
 Since Sheets supports up to roughly 200,000 cells per sheet, this makes Sheetlog perfect for toy projects and MVPs that need a "faux", persisted "database". Think of it as a lighter alternative to Notion Database or Airtable, as opposed to something like Firebase or Supabase.
 
 The Google Sheets API is prone to rate limiting and slow cold starts, so is not ideal for high-traffic or fast applications.
 
 Sheetlog is built on top of the excellent [SpreadAPI](https://spreadapi.roombelt.com/) library, which is a Google Apps Script library that turns any Google Sheets into a data store.
+
+Here's a [live demo and usage guide](https://sheetlog.deno.dev/)
 
 
 ## Installation
@@ -278,9 +282,9 @@ For example, to run `GET_ROWS`:
 ```javascript
 sheet.log(null, {
   method: "GET_ROWS",
-    sheet: "testSheet",
-    startRow: 1,
-    endRow: 9099
+  sheet: "testSheet",
+  startRow: 1,
+  endRow: 9099
 });
 ```
 
@@ -301,6 +305,8 @@ sheet.log(null, {
 | EXPORT | Export data in different formats |
 | AGGREGATE | Perform calculations on columns |
 | BATCH_UPDATE | Update multiple rows efficiently |
+| GET_SHEETS | Get information about all sheets in the spreadsheet |
+| GET_CSV | Export a specific sheet as CSV |
 
 
 ### Retrieve Specific Rows
@@ -528,6 +534,17 @@ You can retrieve specific columns from a Google Sheet using the `GET_COLUMNS` me
     ["A2", "B2", "C2"],
     ["A3", "B3", "C3"]
   ]
+}
+
+// Get information about all sheets
+{
+  "method": "GET_SHEETS"
+}
+
+// Get CSV export of a specific sheet
+{
+  "method": "GET_CSV",
+  "sheet": "testSheet"
 }
 
 ```

@@ -1,4 +1,3 @@
-
 class Sheetlog {
   constructor({ sheetUrl, logPayload, sheet, method } = {}) {
     this.loud = false;
@@ -206,6 +205,20 @@ class Sheetlog {
       ...options,
       method: "DYNAMIC_POST",
       sheet
+    });
+  }
+
+  async getSheets(options = {}) {
+    return this.log({}, {
+      ...options,
+      method: "GET_SHEETS"
+    });
+  }
+
+  async getCsv(options = {}) {
+    return this.log({}, {
+      ...options,
+      method: "GET_CSV"
     });
   }
 }
@@ -747,6 +760,54 @@ const SheetlogSchema = {
         { type: "string" },
         { type: "object" } // For Buffer/binary data
       ]
+    }
+  },
+  getSheets: {
+    input: {
+      type: "object",
+      properties: {
+        options: {
+          type: "object",
+          properties: {
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    output: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          id: { type: "string" },
+          index: { type: "number" },
+          isHidden: { type: "boolean" },
+          csvUrl: { type: "string" },
+          sheetUrl: { type: "string" }
+        },
+        required: ["name", "id", "index"]
+      }
+    }
+  },
+  getCsv: {
+    input: {
+      type: "object",
+      properties: {
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      },
+      required: ["options", "options.sheet"]
+    },
+    output: {
+      type: "string"
     }
   }
 };

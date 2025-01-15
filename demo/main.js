@@ -47,6 +47,45 @@ const html = `
     <h1 class="text-3xl font-bold mb-8">Sheetlog Demo</h1>
     
     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+      <p>Sheetlog is a library for logging and retrieving data from Google Sheets. It is designed to be easy to use and integrate into existing projects.</p>
+      <p>Github repo: <a class="text-blue-500 hover:underline" href="https://github.com/janzheng/sheetlog">https://github.com/janzheng/sheetlog</a></p>
+      <p>It can either be used in Node:</p>
+      
+      <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto mb-4">
+import { Sheetlog } from '@yawnxyz/sheetlog';
+
+const sheet = new Sheetlog({
+  sheetUrl: 'YOUR_SHEET_URL',
+  sheet: 'Sheet1',
+});
+
+await sheet.log({ message: 'Hello world' }); // Basic logging
+await sheet.get('123'); // Get by ID
+await sheet.put('123', { message: 'Updated' }); // Update by ID 
+await sheet.delete('123'); // Delete by ID
+      </pre>
+
+
+
+<p>Or as POST requests directly to the Apps Script:</p>
+      <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto mb-4">
+// Simple POST request example
+const response = await fetch('YOUR_SHEET_URL', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    method: 'POST',
+    sheet: 'Sheet1',
+    payload: {
+      message: 'Hello from API',
+      timestamp: new Date().toISOString()
+    }
+  })
+});</pre>
+
+
       <h2 class="text-xl font-semibold mb-4">Setup</h2>
       <ol class="list-decimal ml-6 mb-6 space-y-2">
         <li>Create a new Google Sheet</li>
@@ -54,7 +93,6 @@ const html = `
         <li>Copy the Sheetlog library code into the script editor</li>
         <li>Deploy as web app and copy the URL</li>
         <li>Paste the URL below to start using the demo</li>
-        <li>Google Sheet Demo Link: <a class="text-blue-500 hover:underline" href="https://docs.google.com/spreadsheets/d/15XoANPN-DAyBkQlN9-s7bCaWzDNibuWTXHFCQMISVK4/edit?usp=sharing" target="_blank">https://docs.google.com/spreadsheets/d/15XoANPN-DAyBkQlN9-s7bCaWzDNibuWTXHFCQMISVK4/edit?usp=sharing</a></li>
       </ol>
       
       <input 
@@ -64,6 +102,10 @@ const html = `
         placeholder="Enter your Sheet Web App URL"
         class="w-full p-2 border rounded mb-4"
       >
+
+      <p>As you try the examples below, the commands will be sent to the Apps Script in the above URL, and either read or write to the Google Sheets connected to the app.</p>
+      <p>This demo uses the following Google Sheet: <a class="text-blue-500 hover:underline" href="https://docs.google.com/spreadsheets/d/15XoANPN-DAyBkQlN9-s7bCaWzDNibuWTXHFCQMISVK4/edit?usp=sharing">https://docs.google.com/spreadsheets/d/15XoANPN-DAyBkQlN9-s7bCaWzDNibuWTXHFCQMISVK4/edit?usp=sharing</a>
+      </p>
     </div>
 
 
@@ -306,6 +348,11 @@ const html = `
     });
   </script>
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    p {
+      margin-bottom: 0.5rem;
+    }
+  </style>
 </body>
 </html>
 `;
