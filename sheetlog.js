@@ -430,6 +430,10 @@ class SheetlogScript {
         return this.handleGetAllCells(sheet);
       case "RANGE_UPDATE":
         return this.handleRangeUpdate(sheet, params);
+      case "GET_SHEETS":
+        return this.handleGetSheets(ss);
+      case "GET_CSV":
+        return this.handleGetCSV(ss, params.sheet);
       default:
         return this.error(404, "unknown_method", { method: method });
     }
@@ -1037,60 +1041,62 @@ class SheetlogScript {
       error: { code: code, details: details }
     };
   }
-}
 
-// Global Google Apps Script functions
-function doPost(request) {
-  // Create new Sheetlog instance with default anonymous unsafe access
-  const logger = loggers.doPostLogger;
-  
-  try {
-    const requestData = JSON.parse(request.postData.contents);
-    if (Array.isArray(requestData)) {
-      return httpResponse(requestData.map(params => logger.handleRequest(params)));
+  handleGetSheets(spreadsheet) {
+    const sheets = spreadsheet.getSheets();
+    const spreadsheetId = spreadsheet.getId();
+    
+    const sheetInfo = sheets.map(sheet => ({
+      name: sheet.getName(),
+      id: sheet.getSheetId(),
+      index: sheet.getIndex() + 1, // Make 1-based instead of 0-based
+      isHidden: sheet.isSheetHidden(),
+      // Add CSV export URL
+      csvUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${sheet.getSheetId()}`,
+      // Add direct sheet URL
+      sheetUrl: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit#gid=${sheet.getSheetId()}`
+    }));
+
+    return this.data(200, sheetInfo);
+  }
+
+  handleGetCSV(spreadsheet, sheetName) {
+    try {
+      const sheets = spreadsheet.getSheets();
+      const spreadsheetId = spreadsheet.getId();
+      
+      // Find the requested sheet
+      const sheet = sheets.find(s => s.getName() === sheetName);
+      if (!sheet) {
+        return this.error(404, "sheet_not_found", { sheet: sheetName });
+      }
+
+      const sheetId = sheet.getSheetId();
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${sheetId}`;
+      
+      // Fetch CSV content
+      const response = UrlFetchApp.fetch(csvUrl, {
+        headers: {
+          Authorization: `Bearer ${ScriptApp.getOAuthToken()}`
+        },
+        muteHttpExceptions: true
+      });
+      
+      if (response.getResponseCode() !== 200) {
+        return this.error(response.getResponseCode(), "csv_fetch_failed", {
+          message: response.getContentText()
+        });
+      }
+
+      // Return raw CSV content
+      return this.data(200, response.getContentText());
+
+    } catch (e) {
+      return this.error(500, "csv_processing_failed", {
+        message: e.message,
+        sheet: sheetName
+      });
     }
-    return httpResponse(logger.handleRequest(requestData));
-  } catch (e) {
-    return httpResponse(
-      error(400, "invalid_post_payload", {
-        payload: request.postData.contents,
-        type: request.postData.type
-      })
-    );
-  }
-}
-
-function doGet(e) {
-  const logger = loggers.doGetLogger;
-  try {
-    return httpResponse(logger.handleRequest(e.parameter));
-  } catch (error) {
-    Logger.log(error.message);
-    return httpResponse(error(500, 'internal_error', { message: error.message }));
-  }
-}
-
-function onEdit(e) {
-  if (!ENABLE_AUTO_TIMESTAMPS) return;
-  
-  const lastModifiedColumnIndex = 1;
-  const range = e.range;
-  const sheet = range.getSheet();
-  let startRow = range.getRow();
-  let numRows = range.getNumRows();
-
-  if (startRow == 1) {
-    startRow = 2;
-    numRows--;
-  }
-
-  const column = range.getColumn();
-  if (column === lastModifiedColumnIndex) return;
-
-  const timestamp = new Date();
-  for (let i = 0; i < numRows; i++) {
-    const row = startRow + i;
-    sheet.getRange(row, lastModifiedColumnIndex).setValue(timestamp);
   }
 }
 
@@ -1107,25 +1113,6 @@ function error(status, code, details) {
   };
 }
 
-
-function doPost(request) {
-  try {
-    var requestData = JSON.parse(request.postData.contents);
-  } catch (e) {
-    return httpResponse(
-      error(400, "invalid_post_payload", {
-        payload: request.postData.contents,
-        type: request.postData.type
-      })
-    );
-  }
-
-  if (Array.isArray(requestData)) {
-    return httpResponse(requestData.map(handleRequest));
-  }
-
-  return httpResponse(logger.handleRequest(requestData));
-}
 
 
 
@@ -1226,23 +1213,20 @@ const loggers = {
   })
 };
 
-// Then modify doGet/doPost to use loggers.anonymous
-function doGet(e) {
-  try {
-    return httpResponse(loggers.anonymous.handleRequest(e.parameter));
-  } catch (error) {
-    Logger.log(error.message);
-    return httpResponse(error(500, 'internal_error', { message: error.message }));
-  }
-}
 
+
+
+// Global Google Apps Script functions
 function doPost(request) {
+  // Create new Sheetlog instance with default anonymous unsafe access
+  const logger = loggers.doPostLogger;
+
   try {
     const requestData = JSON.parse(request.postData.contents);
     if (Array.isArray(requestData)) {
-      return httpResponse(requestData.map(params => loggers.anonymous.handleRequest(params)));
+      return httpResponse(requestData.map(params => logger.handleRequest(params)));
     }
-    return httpResponse(loggers.anonymous.handleRequest(requestData));
+    return httpResponse(logger.handleRequest(requestData));
   } catch (e) {
     return httpResponse(
       error(400, "invalid_post_payload", {
@@ -1250,5 +1234,40 @@ function doPost(request) {
         type: request.postData.type
       })
     );
+  }
+}
+
+
+function doGet(e) {
+  const logger = loggers.doGetLogger;
+  try {
+    return httpResponse(logger.handleRequest(e.parameter));
+  } catch (error) {
+    Logger.log(error.message);
+    return httpResponse(error(500, 'internal_error', { message: error.message }));
+  }
+}
+
+function onEdit(e) {
+  if (!ENABLE_AUTO_TIMESTAMPS) return;
+
+  const lastModifiedColumnIndex = 1;
+  const range = e.range;
+  const sheet = range.getSheet();
+  let startRow = range.getRow();
+  let numRows = range.getNumRows();
+
+  if (startRow == 1) {
+    startRow = 2;
+    numRows--;
+  }
+
+  const column = range.getColumn();
+  if (column === lastModifiedColumnIndex) return;
+
+  const timestamp = new Date();
+  for (let i = 0; i < numRows; i++) {
+    const row = startRow + i;
+    sheet.getRange(row, lastModifiedColumnIndex).setValue(timestamp);
   }
 }

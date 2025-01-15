@@ -91,7 +91,7 @@ const html = `
 
           <div x-show="example.output" class="mt-4">
             <h4 class="font-semibold mb-2">Output:</h4>
-            <pre class="bg-gray-100 p-4 rounded-md"><code x-text="example.output"></code></pre>
+            <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto whitespace-pre-wrap"><code x-text="example.output"></code></pre>
           </div>
         </div>
       </template>
@@ -101,8 +101,27 @@ const html = `
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('sheetlogDemo', () => ({
-        sheetUrl: 'https://script.google.com/macros/s/AKfycby6LeTf0TB-0bQFnL4_6t7lRkgePmtIh2kMqGsvFDjVPXc-0l8wxNJi0dD52XRU0PvZ/exec',
+        sheetUrl: 'https://script.google.com/macros/s/AKfycbwfzRsa4DUR82mGr9ko-W3ZxvJ3dDBxVofQEeZSp_JZau-6zQBBO1UsoQ5-zb7HQKgL/exec',
         examples: [
+          {
+            title: 'Get Sheet Info',
+            description: 'Get all sheet names and their IDs',
+            payload: {
+              method: "GET_SHEETS"
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get Sheet as CSV',
+            description: 'Get all data from a sheet tab as structured data',
+            payload: {
+              method: "GET_CSV",
+              sheet: "testSheet"  // User can change this to their sheet name
+            },
+            payloadStr: '',
+            output: ''
+          },
           {
             title: 'Get Columns',
             description: 'Fetch column data from the sheet',
