@@ -833,33 +833,139 @@ class SheetlogScript {
   handleGetRows(sheet, params) {
     const startRow = parseInt(params.startRow, 10);
     const endRow = params.endRow ? parseInt(params.endRow, 10) : startRow;
-    const rows = this.getRows(sheet, startRow, endRow);
+    const { includeFormulas = false } = params;
+    
+    const rows = {
+      values: this.getRows(sheet, startRow, endRow)
+    };
+    
+    // Add formulas if requested
+    if (includeFormulas) {
+      rows.formulas = sheet.getRange(
+        startRow, 
+        1, 
+        endRow - startRow + 1, 
+        sheet.getLastColumn()
+      ).getFormulas();
+    }
+    
     return this.data(200, rows);
   }
 
   handleGetColumns(sheet, params) {
-    const startIdentifier = params.startColumn;
-    const endIdentifier = params.endColumn || startIdentifier;
-    const columns = this.getColumns(sheet, startIdentifier, endIdentifier);
+    const { 
+      startColumn: startIdentifier, 
+      endColumn: endIdentifier = startIdentifier,
+      includeFormulas = false,
+      includeFormatting = false
+    } = params;
+    
+    const columns = this.getColumns(sheet, startIdentifier, endIdentifier, {
+      includeFormulas,
+      includeFormatting
+    });
     return this.data(200, columns);
+  }
+
+  getColumns(sheet, startIdentifier, endIdentifier = startIdentifier, options = {}) {
+    const {
+      includeFormulas = false,
+      includeFormatting = false
+    } = options;
+
+    const startIndex = this.getColumnIndex(startIdentifier);
+    const lastColumn = sheet.getLastColumn();
+
+    // If startIndex is invalid, return empty
+    if (startIndex < 1) {
+      return [];
+    }
+
+    // Convert endIdentifier to index and clamp to lastColumn
+    const endIndex = Math.min(this.getColumnIndex(endIdentifier), lastColumn);
+    
+    // If startIndex is now greater than adjusted endIndex, return empty
+    if (startIndex > endIndex) {
+      return [];
+    }
+
+    const range = sheet.getRange(
+      1, 
+      startIndex, 
+      sheet.getLastRow(), 
+      endIndex - startIndex + 1
+    );
+
+    const result = {
+      values: range.getValues()
+    };
+
+    if (includeFormulas) {
+      result.formulas = range.getFormulas();
+    }
+
+    if (includeFormatting) {
+      result.backgrounds = range.getBackgrounds();
+      result.fontColors = range.getFontColors();
+      result.numberFormats = range.getNumberFormats();
+    }
+
+    return result;
   }
 
   getAllCells(sheet) {
     // Gets all data in the sheet in one batch operation
     const dataRange = sheet.getDataRange();
-    return {
+    const result = {
       values: dataRange.getValues(),
-      formulas: dataRange.getFormulas(),
-      backgrounds: dataRange.getBackgrounds(),
-      fontColors: dataRange.getFontColors(),
-      numberFormats: dataRange.getNumberFormats(),
       lastColumn: sheet.getLastColumn(),
       lastRow: sheet.getLastRow()
     };
+
+    // Add formulas by default since this is a "get all" operation
+    result.formulas = dataRange.getFormulas();
+
+    // Add formatting information by default
+    result.backgrounds = dataRange.getBackgrounds();
+    result.fontColors = dataRange.getFontColors();
+    result.numberFormats = dataRange.getNumberFormats();
+
+    // Add additional useful formatting information
+    result.fontFamilies = dataRange.getFontFamilies();
+    result.fontSizes = dataRange.getFontSizes();
+    result.fontStyles = dataRange.getFontStyles();
+    result.horizontalAlignments = dataRange.getHorizontalAlignments();
+    result.verticalAlignments = dataRange.getVerticalAlignments();
+    result.wraps = dataRange.getWraps();
+
+    return result;
   }
 
-  handleGetAllCells(sheet) {
+  handleGetAllCells(sheet, params = {}) {
+    const { 
+      includeFormulas = true,  // true by default for getAllCells
+      includeFormatting = true // true by default for getAllCells
+    } = params;
+
     const data = this.getAllCells(sheet);
+    
+    // Remove unwanted properties based on parameters
+    if (!includeFormulas) {
+      delete data.formulas;
+    }
+    
+    if (!includeFormatting) {
+      delete data.backgrounds;
+      delete data.fontColors;
+      delete data.numberFormats;
+      delete data.fontFamilies;
+      delete data.fontSizes;
+      delete data.fontStyles;
+      delete data.horizontalAlignments;
+      delete data.verticalAlignments;
+      delete data.wraps;
+    }
+
     return this.data(200, data);
   }
 
@@ -953,26 +1059,6 @@ class SheetlogScript {
     }
 
     return sheet.getRange(startRow, 1, endRow - startRow + 1, lastColumn).getValues();
-  }
-
-  getColumns(sheet, startIdentifier, endIdentifier = startIdentifier) {
-    const startIndex = this.getColumnIndex(startIdentifier);
-    const lastColumn = sheet.getLastColumn();
-
-    // If startIndex is invalid, return empty
-    if (startIndex < 1) {
-      return [];
-    }
-
-    // Convert endIdentifier to index and clamp to lastColumn
-    const endIndex = Math.min(this.getColumnIndex(endIdentifier), lastColumn);
-    
-    // If startIndex is now greater than adjusted endIndex, return empty
-    if (startIndex > endIndex) {
-      return [];
-    }
-
-    return sheet.getRange(1, startIndex, sheet.getLastRow(), endIndex - startIndex + 1).getValues();
   }
 
   getColumnIndex(identifier) {
@@ -1110,14 +1196,16 @@ class SheetlogScript {
       stopAtEmptyRow = false, 
       stopAtEmptyColumn = false,
       skipEmptyRows = false,
-      skipEmptyColumns = false
+      skipEmptyColumns = false,
+      includeFormulas = false
     } = params;
     
     const range = this.getRange(sheet, startRow, startCol, {
       stopAtEmptyRow,
       stopAtEmptyColumn,
       skipEmptyRows,
-      skipEmptyColumns
+      skipEmptyColumns,
+      includeFormulas
     });
     return this.data(200, range);
   }
@@ -1127,7 +1215,8 @@ class SheetlogScript {
       stopAtEmptyRow = false,
       stopAtEmptyColumn = false,
       skipEmptyRows = false,
-      skipEmptyColumns = false
+      skipEmptyColumns = false,
+      includeFormulas = false
     } = options;
 
     // Validate inputs
@@ -1145,13 +1234,21 @@ class SheetlogScript {
     let endRow = lastRow;
     let endCol = lastCol;
 
-    // Get initial range
+    // Get both values and formulas if requested
     let rangeValues = sheet.getRange(
       startRow,
       startCol,
       endRow - startRow + 1,
       endCol - startCol + 1
     ).getValues();
+    
+    let rangeFormulas = includeFormulas ? 
+      sheet.getRange(
+        startRow,
+        startCol,
+        endRow - startRow + 1,
+        endCol - startCol + 1
+      ).getFormulas() : null;
 
     // Process columns if needed
     if (stopAtEmptyColumn || skipEmptyColumns) {
@@ -1197,8 +1294,21 @@ class SheetlogScript {
       endRow = startRow + rowsToKeep.length - 1;
     }
 
+    // Also process formulas if they exist
+    if (rangeFormulas) {
+      if (stopAtEmptyColumn || skipEmptyColumns) {
+        rangeFormulas = rangeFormulas.map(row => 
+          columnsToKeep.map(col => row[col])
+        );
+      }
+      if (stopAtEmptyRow || skipEmptyRows) {
+        rangeFormulas = rowsToKeep.map(row => rangeFormulas[row]);
+      }
+    }
+
     return {
       values: rangeValues,
+      formulas: rangeFormulas,
       range: {
         startRow,
         startCol,

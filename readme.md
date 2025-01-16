@@ -38,7 +38,7 @@ import sheet from '@yawnxyz/sheetlog';
 
 // initialize the sheet
 const testSheet = new Sheetlog({
-  sheetUrl: "https://script.google.com/macros/s/AKfycby41wlkjusaKDYebYCGMiACdomPVjcsXr56wdONy8nDtvu--Zewdn28PZ6Lx7I1fni3/exec",
+  sheetUrl: "https://script.google.com/macros/s/AKfycbwVqIg9YzOSaa92I6z4Q9VBTSFeNUrT5GfmsWfNKqL9SU4ZQeZ2Rl1FfdE3cjrNqllV/exec",
   sheet: "testSheet"
 });
 
@@ -209,30 +209,73 @@ const csvData = await sheet.getCSV({
 });
 ```
 
-#### .getAllCells(options)
-Retrieves all cells and data from a specified sheet.
+#### .getColumns(options)
+Retrieves specific columns from the sheet. Can fetch single or multiple columns, including formulas and formatting.
+
+**Parameters:**
+- `sheet`: The name of the sheet
+- `startColumn`: The starting column identifier (e.g., "A", "G", or 1)
+- `endColumn`: (Optional) The ending column identifier
+- `includeFormulas`: (Optional) Get the actual formulas in cells instead of computed values
+- `includeFormatting`: (Optional) Include cell formatting information
 
 ```javascript
-const allData = await sheet.getAllCells({
-  sheet: "Users"
+// Get columns with formulas
+const columnsWithFormulas = await sheet.getColumns({
+  sheet: "Users",
+  startColumn: "B",
+  endColumn: "D",
+  includeFormulas: true
+});
+
+// Get columns with full formatting
+const columnsWithFormatting = await sheet.getColumns({
+  sheet: "Users",
+  startColumn: "B",
+  endColumn: "D",
+  includeFormulas: true,
+  includeFormatting: true  // Includes backgrounds, fonts, alignments, etc.
 });
 ```
 
-#### .getColumns(options)
-Retrieves specific columns from the sheet. Can fetch single or multiple columns.
+#### .getAllCells(options)
+Retrieves all cells and data from a specified sheet, with options for formulas and formatting.
+
+**Parameters:**
+- `sheet`: The name of the sheet
+- `includeFormulas`: (Optional, defaults to true) Include cell formulas
+- `includeFormatting`: (Optional, defaults to true) Include full cell formatting
 
 ```javascript
-// Get single column
-const columnData = await sheet.getColumns({
+// Get all cells with complete information
+const allData = await sheet.getAllCells({
   sheet: "Users",
-  startColumn: "B"
+  includeFormulas: true,
+  includeFormatting: true
 });
 
-// Get range of columns
-const columnsData = await sheet.getColumns({
+// Response includes:
+{
+  values: [...],           // Cell values
+  formulas: [...],        // Original formulas
+  backgrounds: [...],     // Cell background colors
+  fontColors: [...],      // Text colors
+  numberFormats: [...],   // Number formatting
+  fontFamilies: [...],    // Font families
+  fontSizes: [...],       // Font sizes
+  fontStyles: [...],      // Font styles (bold, italic, etc.)
+  horizontalAlignments: [...],  // Text alignment
+  verticalAlignments: [...],    // Vertical alignment
+  wraps: [...],           // Text wrapping
+  lastColumn: 10,         // Last used column
+  lastRow: 100           // Last used row
+}
+
+// Get just the values
+const valuesOnly = await sheet.getAllCells({
   sheet: "Users",
-  startColumn: "B",
-  endColumn: "D"
+  includeFormulas: false,
+  includeFormatting: false
 });
 ```
 
@@ -670,6 +713,41 @@ You can retrieve specific columns from a Google Sheet using the `GET_COLUMNS` me
     "endRow": 99,
     "endCol": 26
   }
+}
+
+// Get columns with formulas
+{
+  "method": "GET_COLUMNS",
+  "sheet": "testSheet",
+  "startColumn": "B",
+  "endColumn": "D",
+  "includeFormulas": true
+}
+
+// Get columns with full formatting
+{
+  "method": "GET_COLUMNS",
+  "sheet": "testSheet",
+  "startColumn": "B",
+  "endColumn": "D",
+  "includeFormulas": true,
+  "includeFormatting": true
+}
+
+// Get all cells with complete information
+{
+  "method": "GET_ALL_CELLS",
+  "sheet": "testSheet",
+  "includeFormulas": true,
+  "includeFormatting": true
+}
+
+// Get all cells (values only)
+{
+  "method": "GET_ALL_CELLS",
+  "sheet": "testSheet",
+  "includeFormulas": false,
+  "includeFormatting": false
 }
 
 ```

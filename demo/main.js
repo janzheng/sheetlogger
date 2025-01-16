@@ -49,8 +49,8 @@ const html = `
     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
       <p>Sheetlog is a library for logging and retrieving data from Google Sheets. It is designed to be easy to use and integrate into existing projects.</p>
       <p>Github repo: <a class="text-blue-500 hover:underline" href="https://github.com/janzheng/sheetlog">https://github.com/janzheng/sheetlog</a></p>
-      <p>Sheetlog Google Apps Script library code: <a class="text-blue-500 hover:underline" href="https://github.com/janzheng/sheetlog/blob/main/sheetlog.js">https://github.com/janzheng/sheetlog/blob/main/sheetlog.js</a></p>
       <p>Live test sheet: <a class="text-blue-500 hover:underline" href="https://docs.google.com/spreadsheets/d/15XoANPN-DAyBkQlN9-s7bCaWzDNibuWTXHFCQMISVK4/edit?usp=sharing">Google Sheet</a></p>
+      <hr>
       <p>It can either be used in Node:</p>
       
       <pre class="bg-gray-100 p-4 rounded-md overflow-x-auto mb-4">
@@ -145,7 +145,7 @@ const response = await fetch('YOUR_SHEET_URL', {
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('sheetlogDemo', () => ({
-        sheetUrl: 'https://script.google.com/macros/s/AKfycbx5bpEwZ-Plwri6W6ceFTPnLmxHtybC-SkunPH2Hcy4nV5WSitVIGpRgA-6GoW3ZifX/exec',
+        sheetUrl: 'https://script.google.com/macros/s/AKfycbwVqIg9YzOSaa92I6z4Q9VBTSFeNUrT5GfmsWfNKqL9SU4ZQeZ2Rl1FfdE3cjrNqllV/exec',
         examples: [
           {
             title: 'Get Sheet Info',
@@ -378,6 +378,57 @@ const response = await fetch('YOUR_SHEET_URL', {
                 endRow: 99,
                 endCol: 26  // Column Z
               }
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get Columns with Formulas',
+            description: 'Fetch column data including formulas and cell contents',
+            payload: {
+              method: "GET_COLUMNS",
+              sheet: "testSheet",
+              startColumn: "A",
+              endColumn: "C",
+              includeFormulas: true
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get Columns with Full Formatting',
+            description: 'Fetch column data with formulas and all formatting information',
+            payload: {
+              method: "GET_COLUMNS",
+              sheet: "testSheet",
+              startColumn: "A",
+              endColumn: "C",
+              includeFormulas: true,
+              includeFormatting: true
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get All Cells with Full Details',
+            description: 'Get all sheet data including formulas, formatting, and styles',
+            payload: {
+              method: "GET_ALL_CELLS",
+              sheet: "testSheet",
+              includeFormulas: true,
+              includeFormatting: true
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get All Cells (Values Only)',
+            description: 'Get all sheet data with just the values',
+            payload: {
+              method: "GET_ALL_CELLS",
+              sheet: "testSheet",
+              includeFormulas: false,
+              includeFormatting: false
             },
             payloadStr: '',
             output: ''
