@@ -16,201 +16,14 @@
  * PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
  * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ * Original SpreadAPI Notice:
+ * Copyright 2019 Mateusz Zieliński
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
+ * 
  */
-
-
-/*
- * Authentication Configuration Guide
- * 
- * Sheetlog supports flexible authentication patterns:
- * 
- * 1. Method-level permissions:
- *    - GET: Read access to fetch rows
- *    - POST: Create new rows
- *    - PUT: Update existing rows
- *    - DELETE: Remove rows
- *    - UPSERT: Create or update based on ID
- *    - DYNAMIC_POST: Create rows with dynamic columns
- *    - ADD_COLUMN: Add new columns
- *    - EDIT_COLUMN: Rename columns
- *    - REMOVE_COLUMN: Delete columns
- *    - FIND: Search for specific values
- *    - BULK_DELETE: Remove multiple rows at once
- *    - BATCH_UPDATE: Update multiple rows efficiently
- *    - PAGINATED_GET: Get rows with cursor-based pagination
- *    - AGGREGATE: Perform calculations on columns
- *    - EXPORT: Export data in different formats
- *    - ALL: Full access (*)
- * 
- * 2. Sheet-specific permissions:
- *    - Single sheet: { sheetName: METHOD }
- *    - Multiple sheets: { sheet1: METHOD1, sheet2: METHOD2 }
- *    - All sheets: ALL
- * 
- * 3. Key security:
- *    - Strong keys: Must be 8+ chars with lowercase, uppercase, number, and special char
- *    - Unsafe keys: Marked with UNSAFE() to bypass security requirements
- * 
- * Example Configuration:
- * 
- * const logger = new SheetlogScript({
- *   users: [
- *     // Admin with full access
- *     {
- *       name: "admin",
- *       key: "myStr0ng!Pass",
- *       permissions: "*"
- *     },
- * 
- *     // Power user with mixed permissions
- *     {
- *       name: "poweruser",
- *       key: "P0wer!User",
- *       permissions: {
- *         logs: ["GET", "POST"],
- *         analytics: "GET",
- *         config: ["PUT", "DELETE"]
- *       }
- *     },
- * 
- *     // Read-only user
- *     {
- *       name: "viewer",
- *       key: "V1ewer!Pass",
- *       permissions: {
- *         public: "GET",
- *         reports: "GET"
- *       }
- *     },
- * 
- *     // Write-only user
- *     {
- *       name: "writer",
- *       key: "Wr1ter!Pass",
- *       permissions: {
- *         submissions: "POST"
- *       }
- *     },
- * 
- *     // Development/testing access (unsafe)
- *     {
- *       name: "anonymous",
- *       key: { __unsafe: "" },
- *       permissions: "*"
- *     }
- *   ]
- * });
- * 
- * Available Methods:
- * 
- * GET: Fetch rows
- * - Single row: Provide row ID
- * - Multiple rows: Optional limit and start_id parameters
- * - Sorting: order=desc/asc parameter
- * 
- * PAGINATED_GET: Cursor-based pagination
- * - Required: cursor (optional), limit (default 10)
- * - Optional: sortBy (default 'Date Modified'), sortDir (default 'desc')
- * - Returns: rows, nextCursor, hasMore
- * 
- * POST: Create new rows
- * - Adds timestamp automatically
- * - Accepts single object or array of objects
- * 
- * BATCH_UPDATE: Update multiple rows efficiently
- * - Accepts array of updates: [{ _id, ...data }]
- * - Updates timestamp automatically
- * - More efficient than multiple PUT requests
- * 
- * BULK_DELETE: Remove multiple rows
- * - Accepts array of row IDs
- * - More efficient than multiple DELETE requests
- * 
- * AGGREGATE: Perform calculations on columns
- * - Operations: sum, avg, min, max, count
- * - Parameters: column, operation
- * - Optional: where conditions
- * 
- * EXPORT: Export data
- * - Formats: json, csv
- * - Optional: filtering and sorting
- * 
- * UPSERT: Create or update based on ID
- * - Requires idColumn and id parameters
- * - Updates if found, creates if not
- * 
- * DYNAMIC_POST: Flexible row creation
- * - Automatically adds new columns as needed
- * - Handles nested objects via JSON stringification
- * 
- * PUT: Update specific cells
- * - Requires row ID
- * - Updates only specified fields
- * 
- * DELETE: Remove rows
- * - Clears specified row
- * 
- * ADD_COLUMN: Create new column
- * - Adds column at end of sheet
- * - Requires columnName parameter
- * 
- * EDIT_COLUMN: Rename column
- * - Requires oldColumnName and newColumnName parameters
- * 
- * REMOVE_COLUMN: Delete column
- * - Requires columnName parameter
- * 
- * FIND: Search for matches
- * - Requires idColumn and id parameters
- * - Optional returnAllMatches parameter
- * 
- * Example Usage:
- * 
- * // Paginated Get
- * {
- *   method: "PAGINATED_GET",
- *   sheet: "logs",
- *   limit: 20,
- *   cursor: "100",
- *   sortBy: "timestamp",
- *   sortDir: "desc"
- * }
- * 
- * // Batch Update
- * {
- *   method: "BATCH_UPDATE",
- *   sheet: "logs",
- *   payload: [
- *     { _id: 1, status: "complete" },
- *     { _id: 2, status: "pending" }
- *   ]
- * }
- * 
- * // Aggregate
- * {
- *   method: "AGGREGATE",
- *   sheet: "sales",
- *   column: "amount",
- *   operation: "sum"
- * }
- * 
- * // Export
- * {
- *   method: "EXPORT",
- *   sheet: "logs",
- *   format: "csv"
- * }
- * 
- * // Bulk Delete
- * {
- *   method: "BULK_DELETE",
- *   sheet: "logs",
- *   ids: [1, 2, 3, 4]
- * }
- */
-
-
-
 
 
 // To add better password protection for the sheet,
@@ -218,57 +31,95 @@
 // doGet() — which controls who can read the sheet and
 // doPost() — which controls who can edit/write to the sheet
 
-/*
 
-const defaultLogger = new Sheetlog({
-  users: [
-    // Admin with full access to all sheets
-    // { 
-    //   name: "admin",
-    //   key: "myStr0ng!Pass",  // Strong password required
-    //   permissions: "*"       // ALL access
-    // },
+// Define all logger configurations
+const loggers = {
 
-    // // Power user with mixed permissions
-    // {
-    //   name: "poweruser",
-    //   key: "P0wer!User",
-    //   permissions: {
-    //     logs: ["GET", "POST"],     // Multiple methods for one sheet
-    //     analytics: "GET",          // Single method for one sheet
-    //     config: ["PUT", "DELETE"]  // Multiple methods for another sheet
-    //   }
-    // },
-
-    // // Read-only user for specific sheets
-    // {
-    //   name: "viewer",
-    //   key: "V1ewer!Pass",
-    //   permissions: {
-    //     public: "GET",
-    //     reports: "GET"
-    //   }
-    // },
-
-    // // Write-only user for one sheet
-    // {
-    //   name: "writer",
-    //   key: "Wr1ter!Pass",
-    //   permissions: {
-    //     submissions: "POST"
-    //   }
-    // },
-
-    // Unsafe anonymous access (for prototyping)
-    {
+  anonymous: new SheetlogScript({
+    users: [{
       name: "anonymous",
-      key: { __unsafe: "" },    // No password required
-      permissions: "*"          // Full access
-    }
-  ]
-});
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
 
-*/
+  doPostLogger: new SheetlogScript({
+    users: [{
+      name: "anonymous",
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
+
+  doGetLogger: new SheetlogScript({
+    users: [{
+      name: "anonymous",
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
+
+  admin: new SheetlogScript({
+    users: [{
+      name: "admin",
+      key: "myStr0ng!Pass",
+      permissions: "*"
+    }]
+  }),
+
+  powerUser: new SheetlogScript({
+    users: [{
+      name: "poweruser",
+      key: "P0wer!User",
+      permissions: {
+        logs: ["GET", "POST"],
+        analytics: "GET",
+        config: ["PUT", "DELETE"]
+      }
+    }]
+  }),
+
+  viewer: new SheetlogScript({
+    users: [{
+      name: "viewer",
+      key: "V1ewer!Pass",
+      permissions: {
+        public: "GET",
+        reports: "GET"
+      }
+    }]
+  }),
+
+  writer: new SheetlogScript({
+    users: [{
+      name: "writer",
+      key: "Wr1ter!Pass",
+      permissions: {
+        submissions: "POST"
+      }
+    }]
+  }),
+
+  // Example of mixed permissions
+  mixed: new SheetlogScript({
+    users: [
+      {
+        name: "admin",
+        key: "Adm1n!Pass",
+        permissions: "*"
+      },
+      {
+        name: "viewer",
+        key: "V1ew!Only",
+        permissions: {
+          public: "GET"
+        }
+      }
+    ]
+  })
+};
+
+
 
 // Configuration flag for automatic timestamp updating
 const ENABLE_AUTO_TIMESTAMPS = false;
@@ -1389,102 +1240,6 @@ function error(status, code, details) {
 
 
 
-
-
-/*
- * Original SpreadAPI Notice:
- * Copyright 2019 Mateusz Zieliński
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
- */ 
-
-// Define all logger configurations
-const loggers = {
-  
-  anonymous: new SheetlogScript({
-    users: [{
-      name: "anonymous",
-      key: { __unsafe: "" },
-      permissions: "*"
-    }]
-  }),
-
-  doPostLogger: new SheetlogScript({
-    users: [{
-      name: "anonymous",
-      key: { __unsafe: "" },
-      permissions: "*"
-    }]
-  }),
-
-  doGetLogger: new SheetlogScript({
-    users: [{
-      name: "anonymous",
-      key: { __unsafe: "" },
-      permissions: "*"
-    }]
-  }),
-
-  admin: new SheetlogScript({
-    users: [{
-      name: "admin",
-      key: "myStr0ng!Pass",
-      permissions: "*"
-    }]
-  }),
-
-  powerUser: new SheetlogScript({
-    users: [{
-      name: "poweruser",
-      key: "P0wer!User",
-      permissions: {
-        logs: ["GET", "POST"],
-        analytics: "GET",
-        config: ["PUT", "DELETE"]
-      }
-    }]
-  }),
-
-  viewer: new SheetlogScript({
-    users: [{
-      name: "viewer", 
-      key: "V1ewer!Pass",
-      permissions: {
-        public: "GET",
-        reports: "GET"
-      }
-    }]
-  }),
-
-  writer: new SheetlogScript({
-    users: [{
-      name: "writer",
-      key: "Wr1ter!Pass",
-      permissions: {
-        submissions: "POST"
-      }
-    }]
-  }),
-
-  // Example of mixed permissions
-  mixed: new SheetlogScript({
-    users: [
-      {
-        name: "admin",
-        key: "Adm1n!Pass",
-        permissions: "*"
-      },
-      {
-        name: "viewer",
-        key: "V1ew!Only",
-        permissions: {
-          public: "GET"
-        }
-      }
-    ]
-  })
-};
 
 
 

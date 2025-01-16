@@ -239,7 +239,7 @@ const columnsWithFormatting = await sheet.getColumns({
 ```
 
 #### .getAllCells(options)
-Retrieves all cells and data from a specified sheet, with options for formulas and formatting.
+Retrieves all cells and data from a specified sheet, with comprehensive formatting information.
 
 **Parameters:**
 - `sheet`: The name of the sheet
@@ -249,7 +249,7 @@ Retrieves all cells and data from a specified sheet, with options for formulas a
 ```javascript
 // Get all cells with complete information
 const allData = await sheet.getAllCells({
-  sheet: "Users",
+  sheet: "testSheet",
   includeFormulas: true,
   includeFormatting: true
 });
@@ -270,13 +270,6 @@ const allData = await sheet.getAllCells({
   lastColumn: 10,         // Last used column
   lastRow: 100           // Last used row
 }
-
-// Get just the values
-const valuesOnly = await sheet.getAllCells({
-  sheet: "Users",
-  includeFormulas: false,
-  includeFormatting: false
-});
 ```
 
 #### .getRows(options)
@@ -750,4 +743,112 @@ You can retrieve specific columns from a Google Sheet using the `GET_COLUMNS` me
   "includeFormatting": false
 }
 
+### Authentication & Security
+
+#### Strong Password Requirements
+Keys (passwords) must meet the following criteria:
+- Minimum 8 characters
+- Include at least one lowercase letter
+- Include at least one uppercase letter
+- Include at least one number
+- Include at least one special character
+- Can be marked as `UNSAFE()` to bypass security requirements (development only)
+
+```javascript
+const logger = new Sheetlog({
+  users: [
+    // Strong password example
+    {
+      name: "admin",
+      key: "myStr0ng!Pass",  // Meets all requirements
+      permissions: "*"
+    },
+    
+    // Unsafe password example (development only)
+    {
+      name: "dev",
+      key: { __unsafe: "simple" },  // Bypasses requirements
+      permissions: "*"
+    }
+  ]
+});
+```
+
+### Data Aggregation
+
+#### .aggregate(column, operation, options)
+Performs calculations on numeric columns.
+
+**Operations:**
+- `sum`: Total of all values
+- `avg`: Average of values
+- `min`: Minimum value
+- `max`: Maximum value
+- `count`: Count of numeric values
+
+```javascript
+const result = await sheet.aggregate(
+  "amount",           // column
+  "sum",             // operation: sum, avg, min, max, count
+  {
+    sheet: "Sales",
+    where: { status: "completed" }  // Optional filter
+  }
+);
+```
+
+### Batch Operations
+
+#### .batchUpdate(updates, options)
+Efficiently updates multiple rows in a single operation.
+
+```javascript
+const result = await sheet.batchUpdate([
+  { _id: 1, status: "complete", amount: 100 },
+  { _id: 2, status: "pending", amount: 200 }
+], {
+  sheet: "Orders"
+});
+```
+
+### Column Management
+
+#### .addColumn(columnName, options)
+Adds a new column to the sheet.
+
+```javascript
+const result = await sheet.addColumn("newColumn", {
+  sheet: "Users"
+});
+```
+
+#### .editColumn(oldName, newName, options)
+Renames an existing column.
+
+```javascript
+const result = await sheet.editColumn(
+  "oldName",
+  "newName",
+  { sheet: "Users" }
+);
+```
+
+#### .removeColumn(columnName, options)
+Removes a column from the sheet.
+
+```javascript
+const result = await sheet.removeColumn("columnToRemove", {
+  sheet: "Users"
+});
+```
+
+### Bulk Operations
+
+#### .bulkDelete(ids, options)
+Removes multiple rows in a single operation.
+
+```javascript
+const result = await sheet.bulkDelete([1, 2, 3, 4], {
+  sheet: "Users"
+});
 ```

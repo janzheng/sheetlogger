@@ -222,7 +222,7 @@ class Sheetlog {
     });
   }
 
-  async getRange(payload, { sheet, startRow, startCol, stopAtEmptyRow, stopAtEmptyColumn, skipEmptyRows, skipEmptyColumns, ...options } = {}) {
+  async getRange({ sheet, startRow, startCol, stopAtEmptyRow, stopAtEmptyColumn, skipEmptyRows, skipEmptyColumns, ...options } = {}) {
     return this.log({}, {
       ...options,
       method: "GET_RANGE",
@@ -236,7 +236,7 @@ class Sheetlog {
     });
   }
 
-  async getDataBlock(payload, { sheet, searchRange, ...options } = {}) {
+  async getDataBlock({ sheet, searchRange, ...options } = {}) {
     return this.log({}, {
       ...options,
       method: "GET_DATA_BLOCK",
