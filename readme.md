@@ -247,6 +247,52 @@ const rows = await sheet.getRows({
 });
 ```
 
+#### .getRange(payload, options)
+Retrieves data from a specified range with flexible empty cell handling.
+
+```javascript
+// Basic range retrieval
+const result = await sheet.getRange({}, {
+  sheet: "Sheet1",
+  startRow: 2,
+  startCol: 3
+});
+
+// Stop at first empty row or column
+const result = await sheet.getRange({}, {
+  sheet: "Sheet1",
+  startRow: 2,
+  startCol: 3,
+  stopAtEmptyRow: true,    // Stop when encountering an empty row
+  stopAtEmptyColumn: true  // Stop when encountering an empty column
+});
+
+// Skip empty rows and columns
+const result = await sheet.getRange({}, {
+  sheet: "Sheet1",
+  startRow: 2,
+  startCol: 3,
+  skipEmptyRows: true,     // Skip any empty rows in the range
+  skipEmptyColumns: true   // Skip any empty columns in the range
+});
+```
+
+#### .getDataBlock(payload, options)
+Automatically finds and retrieves a contiguous block of data within a search range. Useful for finding data that's not aligned to A1.
+
+```javascript
+// Find data block anywhere in first 99 rows and 26 columns (A-Z)
+const result = await sheet.getDataBlock({}, {
+  sheet: "Sheet1",
+  searchRange: {
+    startRow: 1,
+    startCol: 1,
+    endRow: 99,
+    endCol: 26
+  }
+});
+```
+
 ### Column Management
 
 ```javascript
@@ -600,6 +646,30 @@ You can retrieve specific columns from a Google Sheet using the `GET_COLUMNS` me
 {
   "method": "GET_CSV",
   "sheet": "testSheet"
+}
+
+// Get range with empty handling
+{
+  "method": "GET_RANGE",
+  "sheet": "Sheet1",
+  "startRow": 2,
+  "startCol": 3,
+  "stopAtEmptyRow": true,
+  "stopAtEmptyColumn": true,
+  "skipEmptyRows": true,
+  "skipEmptyColumns": true
+}
+
+// Find data block
+{
+  "method": "GET_DATA_BLOCK",
+  "sheet": "Sheet1",
+  "searchRange": {
+    "startRow": 1,
+    "startCol": 1,
+    "endRow": 99,
+    "endCol": 26
+  }
 }
 
 ```

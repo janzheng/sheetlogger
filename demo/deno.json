@@ -6,7 +6,8 @@
     "merge": "deno run --allow-read --allow-write --allow-env ../../_dev/merge_files.ts",
     "reload": "deno run --watch --allow-read --allow-env --allow-write --allow-net ./main.js",
     "serve": "deno serve --watch --allow-read --allow-env --allow-write --allow-net ./main.js",
-    "test": "deno run --allow-read --allow-env --allow-write --allow-net ./test.js"
+    "test": "deno run --allow-read --allow-env --allow-write --allow-net ./test.js",
+    "prod": "deployctl deploy --prod --project=sheetlog"
   },
   "exports": "./main.js",
   "deploy": {

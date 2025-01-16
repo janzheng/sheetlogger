@@ -49,6 +49,7 @@ const html = `
     <div class="bg-white p-6 rounded-lg shadow-md mb-8">
       <p>Sheetlog is a library for logging and retrieving data from Google Sheets. It is designed to be easy to use and integrate into existing projects.</p>
       <p>Github repo: <a class="text-blue-500 hover:underline" href="https://github.com/janzheng/sheetlog">https://github.com/janzheng/sheetlog</a></p>
+      <p>Sheetlog Google Apps Script library code: <a class="text-blue-500 hover:underline" href="https://github.com/janzheng/sheetlog/blob/main/sheetlog.js">https://github.com/janzheng/sheetlog/blob/main/sheetlog.js</a></p>
       <p>Live test sheet: <a class="text-blue-500 hover:underline" href="https://docs.google.com/spreadsheets/d/15XoANPN-DAyBkQlN9-s7bCaWzDNibuWTXHFCQMISVK4/edit?usp=sharing">Google Sheet</a></p>
       <p>It can either be used in Node:</p>
       
@@ -91,7 +92,7 @@ const response = await fetch('YOUR_SHEET_URL', {
       <ol class="list-decimal ml-6 mb-6 space-y-2">
         <li>Create a new Google Sheet</li>
         <li>Go to Extensions > Apps Script</li>
-        <li>Copy the Sheetlog library code into the script editor</li>
+        <li>Copy the Sheetlog library code into the script editor: <a class="text-blue-500 hover:underline" href="https://github.com/janzheng/sheetlog/blob/main/sheetlog.js">https://github.com/janzheng/sheetlog/blob/main/sheetlog.js</a></li>
         <li>Deploy as web app and copy the URL</li>
         <li>Paste the URL below to start using the demo</li>
       </ol>
@@ -144,7 +145,7 @@ const response = await fetch('YOUR_SHEET_URL', {
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('sheetlogDemo', () => ({
-        sheetUrl: 'https://script.google.com/macros/s/AKfycbwfzRsa4DUR82mGr9ko-W3ZxvJ3dDBxVofQEeZSp_JZau-6zQBBO1UsoQ5-zb7HQKgL/exec',
+        sheetUrl: 'https://script.google.com/macros/s/AKfycbx5bpEwZ-Plwri6W6ceFTPnLmxHtybC-SkunPH2Hcy4nV5WSitVIGpRgA-6GoW3ZifX/exec',
         examples: [
           {
             title: 'Get Sheet Info',
@@ -295,6 +296,88 @@ const response = await fetch('YOUR_SHEET_URL', {
               method: "ADD_COLUMN",
               sheet: "testSheet",
               columnName: "newColumn"
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get Range',
+            description: 'Get values from a specific range, optionally stopping at empty cells',
+            payload: {
+              method: "GET_RANGE",
+              sheet: "testSheet",
+              startRow: 2,
+              startCol: 1,
+              stopAtEmpty: false
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get Range (Stop at Empty)',
+            description: 'Get range values, stopping at the first empty cell in row/column',
+            payload: {
+              method: "GET_RANGE",
+              sheet: "testSheet",
+              startRow: 2,
+              startCol: 1,
+              stopAtEmpty: true
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get Range (Stop at Empty Row)',
+            description: 'Get range values, stopping when encountering an empty row',
+            payload: {
+              method: "GET_RANGE",
+              sheet: "testSheet",
+              startRow: 2,
+              startCol: 1,
+              stopAtEmptyRow: true
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get Range (Stop at Empty Column)',
+            description: 'Get range values, stopping when encountering an empty column',
+            payload: {
+              method: "GET_RANGE",
+              sheet: "testSheet",
+              startRow: 2,
+              startCol: 1,
+              stopAtEmptyColumn: true
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Get Range (Skip Empty)',
+            description: 'Get range values, skipping any empty rows and columns',
+            payload: {
+              method: "GET_RANGE",
+              sheet: "testSheet",
+              startRow: 2,
+              startCol: 1,
+              skipEmptyRows: true,
+              skipEmptyColumns: true
+            },
+            payloadStr: '',
+            output: ''
+          },
+          {
+            title: 'Find Data Block',
+            description: 'Automatically find and return a block of data within a search range',
+            payload: {
+              method: "GET_DATA_BLOCK",
+              sheet: "testSheet",
+              searchRange: {
+                startRow: 1,
+                startCol: 1,
+                endRow: 99,
+                endCol: 26  // Column Z
+              }
             },
             payloadStr: '',
             output: ''

@@ -434,6 +434,10 @@ class SheetlogScript {
         return this.handleGetSheets(ss);
       case "GET_CSV":
         return this.handleGetCSV(ss, params.sheet);
+      case "GET_RANGE":
+        return this.handleGetRange(sheet, params);
+      case "GET_DATA_BLOCK":
+        return this.handleGetDataBlock(sheet, params);
       default:
         return this.error(404, "unknown_method", { method: method });
     }
@@ -1097,6 +1101,165 @@ class SheetlogScript {
         sheet: sheetName
       });
     }
+  }
+
+  handleGetRange(sheet, params) {
+    const { 
+      startRow, 
+      startCol, 
+      stopAtEmptyRow = false, 
+      stopAtEmptyColumn = false,
+      skipEmptyRows = false,
+      skipEmptyColumns = false
+    } = params;
+    
+    const range = this.getRange(sheet, startRow, startCol, {
+      stopAtEmptyRow,
+      stopAtEmptyColumn,
+      skipEmptyRows,
+      skipEmptyColumns
+    });
+    return this.data(200, range);
+  }
+
+  getRange(sheet, startRow, startCol, options = {}) {
+    const {
+      stopAtEmptyRow = false,
+      stopAtEmptyColumn = false,
+      skipEmptyRows = false,
+      skipEmptyColumns = false
+    } = options;
+
+    // Validate inputs
+    if (startRow < 1 || startCol < 1) {
+      return [];
+    }
+
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    
+    if (startRow > lastRow || startCol > lastCol) {
+      return [];
+    }
+
+    let endRow = lastRow;
+    let endCol = lastCol;
+
+    // Get initial range
+    let rangeValues = sheet.getRange(
+      startRow,
+      startCol,
+      endRow - startRow + 1,
+      endCol - startCol + 1
+    ).getValues();
+
+    // Process columns if needed
+    if (stopAtEmptyColumn || skipEmptyColumns) {
+      const columnsToKeep = [];
+      for (let col = 0; col < rangeValues[0].length; col++) {
+        const isEmptyColumn = rangeValues.every(row => this.isEmpty(row[col]));
+        if (!isEmptyColumn) {
+          columnsToKeep.push(col);
+        } else if (stopAtEmptyColumn) {
+          break;
+        }
+      }
+      
+      if (columnsToKeep.length === 0) {
+        return { values: [], range: null };
+      }
+
+      // Filter columns
+      rangeValues = rangeValues.map(row => 
+        columnsToKeep.map(col => row[col])
+      );
+      endCol = startCol + columnsToKeep.length - 1;
+    }
+
+    // Process rows if needed
+    if (stopAtEmptyRow || skipEmptyRows) {
+      const rowsToKeep = [];
+      for (let row = 0; row < rangeValues.length; row++) {
+        const isEmptyRow = rangeValues[row].every(cell => this.isEmpty(cell));
+        if (!isEmptyRow) {
+          rowsToKeep.push(row);
+        } else if (stopAtEmptyRow) {
+          break;
+        }
+      }
+
+      if (rowsToKeep.length === 0) {
+        return { values: [], range: null };
+      }
+
+      // Filter rows
+      rangeValues = rowsToKeep.map(row => rangeValues[row]);
+      endRow = startRow + rowsToKeep.length - 1;
+    }
+
+    return {
+      values: rangeValues,
+      range: {
+        startRow,
+        startCol,
+        endRow,
+        endCol,
+        numRows: endRow - startRow + 1,
+        numCols: endCol - startCol + 1
+      }
+    };
+  }
+
+  // New function to find and get a data block
+  handleGetDataBlock(sheet, params) {
+    const { searchRange = {} } = params;
+    const { 
+      startRow = 1, 
+      startCol = 1, 
+      endRow = sheet.getLastRow(), 
+      endCol = sheet.getLastColumn() 
+    } = searchRange;
+    
+    const block = this.findDataBlock(sheet, startRow, startCol, endRow, endCol);
+    return this.data(200, block);
+  }
+
+  findDataBlock(sheet, startRow, startCol, endRow, endCol) {
+    // Get the entire search range
+    const searchValues = sheet.getRange(startRow, startCol, 
+      endRow - startRow + 1, endCol - startCol + 1).getValues();
+
+    // Find the first non-empty cell
+    let blockStartRow = -1;
+    let blockStartCol = -1;
+    let found = false;
+
+    for (let row = 0; row < searchValues.length && !found; row++) {
+      for (let col = 0; col < searchValues[0].length; col++) {
+        if (!this.isEmpty(searchValues[row][col])) {
+          blockStartRow = row;
+          blockStartCol = col;
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      return { values: [], range: null };
+    }
+
+    // Get the range with the found starting point
+    return this.getRange(sheet, 
+      startRow + blockStartRow, 
+      startCol + blockStartCol, 
+      {
+        stopAtEmptyRow: true,
+        stopAtEmptyColumn: true,
+        skipEmptyRows: true,
+        skipEmptyColumns: true
+      }
+    );
   }
 }
 

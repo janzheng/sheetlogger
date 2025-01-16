@@ -221,6 +221,34 @@ class Sheetlog {
       method: "GET_CSV"
     });
   }
+
+  async getRange(payload, { sheet, startRow, startCol, stopAtEmptyRow, stopAtEmptyColumn, skipEmptyRows, skipEmptyColumns, ...options } = {}) {
+    return this.log({}, {
+      ...options,
+      method: "GET_RANGE",
+      sheet,
+      startRow: startRow || 1,
+      startCol: startCol || 1,
+      stopAtEmptyRow,
+      stopAtEmptyColumn,
+      skipEmptyRows,
+      skipEmptyColumns
+    });
+  }
+
+  async getDataBlock(payload, { sheet, searchRange, ...options } = {}) {
+    return this.log({}, {
+      ...options,
+      method: "GET_DATA_BLOCK",
+      sheet,
+      searchRange: searchRange || {
+        startRow: 1,
+        startCol: 1,
+        endRow: 99,
+        endCol: 26
+      }
+    });
+  }
 }
 
 
@@ -808,6 +836,101 @@ const SheetlogSchema = {
     },
     output: {
       type: "string"
+    }
+  },
+  getRange: {
+    input: {
+      type: "object",
+      properties: {
+        startRow: { type: "number" },
+        startCol: { type: "number" },
+        stopAtEmptyRow: { type: "boolean" },
+        stopAtEmptyColumn: { type: "boolean" },
+        skipEmptyRows: { type: "boolean" },
+        skipEmptyColumns: { type: "boolean" },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    output: {
+      type: "object",
+      properties: {
+        values: {
+          type: "array",
+          items: {
+            type: "array",
+            items: { type: "any" }
+          }
+        },
+        range: {
+          type: "object",
+          properties: {
+            startRow: { type: "number" },
+            startCol: { type: "number" },
+            endRow: { type: "number" },
+            endCol: { type: "number" },
+            numRows: { type: "number" },
+            numCols: { type: "number" }
+          },
+          required: ["startRow", "startCol", "endRow", "endCol", "numRows", "numCols"]
+        }
+      },
+      required: ["values", "range"]
+    }
+  },
+  getDataBlock: {
+    input: {
+      type: "object",
+      properties: {
+        searchRange: {
+          type: "object",
+          properties: {
+            startRow: { type: "number" },
+            startCol: { type: "number" },
+            endRow: { type: "number" },
+            endCol: { type: "number" }
+          }
+        },
+        options: {
+          type: "object",
+          properties: {
+            sheet: { type: "string" },
+            sheetUrl: { type: "string" }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    output: {
+      type: "object",
+      properties: {
+        values: {
+          type: "array",
+          items: {
+            type: "array",
+            items: { type: "any" }
+          }
+        },
+        range: {
+          type: "object",
+          properties: {
+            startRow: { type: "number" },
+            startCol: { type: "number" },
+            endRow: { type: "number" },
+            endCol: { type: "number" },
+            numRows: { type: "number" },
+            numCols: { type: "number" }
+          },
+          required: ["startRow", "startCol", "endRow", "endCol", "numRows", "numCols"]
+        }
+      },
+      required: ["values", "range"]
     }
   }
 };
