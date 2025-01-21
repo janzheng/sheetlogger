@@ -145,7 +145,7 @@ const response = await fetch('YOUR_SHEET_URL', {
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('sheetlogDemo', () => ({
-        sheetUrl: 'https://script.google.com/macros/s/AKfycbygKz4N_uW7DquJ8NFaiNsJtfveQcOqZInJa-okbaBhsfz4DWB4Eg12EEPVsEKp73RA/exec',
+        sheetUrl: 'https://script.google.com/macros/s/AKfycbz-wz7rvFBz51DLdhof4m5LnG6PfSunW05kjOfHfqh_V5ZFFQxRycd11zQHv53oboEJ/exec',
         examples: [
           {
             title: 'Get Sheet Info',

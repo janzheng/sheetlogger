@@ -32,93 +32,6 @@
 // doPost() — which controls who can edit/write to the sheet
 
 
-// Define all logger configurations
-const loggers = {
-
-  anonymous: new SheetlogScript({
-    users: [{
-      name: "anonymous",
-      key: { __unsafe: "" },
-      permissions: "*"
-    }]
-  }),
-
-  doPostLogger: new SheetlogScript({
-    users: [{
-      name: "anonymous",
-      key: { __unsafe: "" },
-      permissions: "*"
-    }]
-  }),
-
-  doGetLogger: new SheetlogScript({
-    users: [{
-      name: "anonymous",
-      key: { __unsafe: "" },
-      permissions: "*"
-    }]
-  }),
-
-  admin: new SheetlogScript({
-    users: [{
-      name: "admin",
-      key: "myStr0ng!Pass",
-      permissions: "*"
-    }]
-  }),
-
-  powerUser: new SheetlogScript({
-    users: [{
-      name: "poweruser",
-      key: "P0wer!User",
-      permissions: {
-        logs: ["GET", "POST"],
-        analytics: "GET",
-        config: ["PUT", "DELETE"]
-      }
-    }]
-  }),
-
-  viewer: new SheetlogScript({
-    users: [{
-      name: "viewer",
-      key: "V1ewer!Pass",
-      permissions: {
-        public: "GET",
-        reports: "GET"
-      }
-    }]
-  }),
-
-  writer: new SheetlogScript({
-    users: [{
-      name: "writer",
-      key: "Wr1ter!Pass",
-      permissions: {
-        submissions: "POST"
-      }
-    }]
-  }),
-
-  // Example of mixed permissions
-  mixed: new SheetlogScript({
-    users: [
-      {
-        name: "admin",
-        key: "Adm1n!Pass",
-        permissions: "*"
-      },
-      {
-        name: "viewer",
-        key: "V1ew!Only",
-        permissions: {
-          public: "GET"
-        }
-      }
-    ]
-  })
-};
-
 
 
 // Configuration flag for automatic timestamp updating
@@ -1299,3 +1212,95 @@ function onEdit(e) {
     sheet.getRange(row, lastModifiedColumnIndex).setValue(timestamp);
   }
 }
+
+
+
+
+
+
+// Define all logger configurations
+const loggers = {
+
+  anonymous: new SheetlogScript({
+    users: [{
+      name: "anonymous",
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
+
+  doPostLogger: new SheetlogScript({
+    users: [{
+      name: "anonymous",
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
+
+  doGetLogger: new SheetlogScript({
+    users: [{
+      name: "anonymous",
+      key: { __unsafe: "" },
+      permissions: "*"
+    }]
+  }),
+
+  admin: new SheetlogScript({
+    users: [{
+      name: "admin",
+      key: "myStr0ng!Pass",
+      permissions: "*"
+    }]
+  }),
+
+  powerUser: new SheetlogScript({
+    users: [{
+      name: "poweruser",
+      key: "P0wer!User",
+      permissions: {
+        logs: ["GET", "POST"],
+        analytics: "GET",
+        config: ["PUT", "DELETE"]
+      }
+    }]
+  }),
+
+  viewer: new SheetlogScript({
+    users: [{
+      name: "viewer",
+      key: "V1ewer!Pass",
+      permissions: {
+        public: "GET",
+        reports: "GET"
+      }
+    }]
+  }),
+
+  writer: new SheetlogScript({
+    users: [{
+      name: "writer",
+      key: "Wr1ter!Pass",
+      permissions: {
+        submissions: "POST"
+      }
+    }]
+  }),
+
+  // Example of mixed permissions
+  mixed: new SheetlogScript({
+    users: [
+      {
+        name: "admin",
+        key: "Adm1n!Pass",
+        permissions: "*"
+      },
+      {
+        name: "viewer",
+        key: "V1ew!Only",
+        permissions: {
+          public: "GET"
+        }
+      }
+    ]
+  })
+};
