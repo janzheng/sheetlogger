@@ -65,6 +65,7 @@ The `.log` function is the core method used to interact with the sheet. It accep
   - `method`: Request method (defaults to "POST")
   - `id`: Row ID for operations like GET/PUT
   - `idColumn`: Column name for UPSERT operations
+  - `partialUpdate`: (boolean) If true, only updates the specified fields in the row, rather than replacing the entire row
   - Additional parameters specific to each method
 
 Example:
@@ -525,6 +526,7 @@ You can retrieve specific columns from a Google Sheet using the `GET_COLUMNS` me
   "sheet": "users",
   "idColumn": "userId",
   "id": 123,
+  "partialUpdate": true,
   "payload": {
     "name": "Jane Doe",
     "email": "jane@example.com"

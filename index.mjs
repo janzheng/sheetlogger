@@ -450,7 +450,8 @@ const SheetlogSchema = {
           type: "object",
           properties: {
             sheet: { type: "string" },
-            sheetUrl: { type: "string" }
+            sheetUrl: { type: "string" },
+            partialUpdate: { type: "boolean", default: false }
           },
           additionalProperties: false
         }

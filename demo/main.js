@@ -212,6 +212,7 @@ const response = await fetch('YOUR_SHEET_URL', {
               sheet: "testSheet",
               idColumn: "email",
               id: "john@example.com",
+              partialUpdate: true,
               payload: {
                 name: "John Doe Updated",
                 status: "active"

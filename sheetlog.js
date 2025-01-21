@@ -88,12 +88,7 @@ class SheetlogScript {
     const existingHeaders = this.getHeaders(sheet);
     const newColumns = [];
 
-    // Ensure "Date Modified" is always the first column
-    if (existingHeaders[0] !== "Date Modified") {
-      sheet.insertColumnBefore(1);
-      sheet.getRange(1, 1).setValue("Date Modified");
-    }
-
+    // Remove automatic "Date Modified" column creation
     objects.forEach(obj => {
       Object.keys(obj).forEach(key => {
         if (!existingHeaders.includes(key) && !newColumns.includes(key)) {
@@ -161,7 +156,7 @@ class SheetlogScript {
       case "POST":
         return this.handlePost(sheet, payload);
       case "UPSERT":
-        return this.handleUpsert(sheet, idColumn, id, payload);
+        return this.handleUpsert(sheet, idColumn, id, payload, { ...params });
       case "DYNAMIC_POST":
         return this.handleDynamicPost(sheet, payload);
       case "PUT":
@@ -271,11 +266,14 @@ class SheetlogScript {
 
   handlePost(sheet, payload) {
     const headers = this.getHeaders(sheet);
-    const currentDate = new Date();
-    const formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss");
-
-    let row = this.mapObjectToRow(payload, headers.slice(1));
-    row.unshift(formattedDate);
+    let row = this.mapObjectToRow(payload, headers);
+    
+    // Only add timestamp if "Date Modified" column exists
+    if (headers[0] === "Date Modified") {
+      const currentDate = new Date();
+      const formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss");
+      row.unshift(formattedDate);
+    }
 
     sheet.appendRow(row);
     return this.data(201);
@@ -287,9 +285,9 @@ class SheetlogScript {
     }
 
     this.addNewColumnsIfNeeded(sheet, payload);
-
     const headers = this.getHeaders(sheet);
     const currentDate = new Date();
+    const hasDateModified = headers[0] === "Date Modified";
 
     const processedPayload = payload.map(obj =>
       Object.keys(obj).reduce((acc, key) => {
@@ -299,8 +297,16 @@ class SheetlogScript {
     );
 
     processedPayload.forEach(obj => {
-      const row = [Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss")];
-      headers.slice(1).forEach(header => row.push(obj[header] || ""));
+      const row = [];
+      // Only add timestamp if "Date Modified" column exists
+      if (hasDateModified) {
+        row.push(Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss"));
+      }
+      headers.forEach(header => {
+        if (header !== "Date Modified") {
+          row.push(obj[header] || "");
+        }
+      });
       sheet.appendRow(row);
     });
 
@@ -349,7 +355,7 @@ class SheetlogScript {
     return result;
   }
 
-  handleUpsert(sheet, idColumn, _id, payload) {
+  handleUpsert(sheet, idColumn, _id, payload, options = { partialUpdate: false }) {
     const headers = this.getHeaders(sheet);
     const idColumnIndex = headers.indexOf(idColumn) + 1;
     if (idColumnIndex < 1) {
@@ -370,11 +376,27 @@ class SheetlogScript {
     const formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM/dd/yyyy HH:mm:ss");
 
     if (foundRow) {
-      const rowValues = this.mapObjectToRow(payload, headers.slice(1));
-      rowValues.unshift(formattedDate);
-      sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+      if (options.partialUpdate) {
+        // Update only specified columns
+        sheet.getRange(foundRow, 1).setValue(formattedDate); // Always update timestamp
+        
+        Object.entries(payload).forEach(([key, value]) => {
+          const colIndex = headers.indexOf(key);
+          if (colIndex !== -1) {
+            sheet.getRange(foundRow, colIndex + 1).setValue(
+              typeof value === 'object' ? JSON.stringify(value) : value
+            );
+          }
+        });
+      } else {
+        // Original behavior: update entire row
+        const rowValues = this.mapObjectToRow(payload, headers.slice(1));
+        rowValues.unshift(formattedDate);
+        sheet.getRange(foundRow, 1, 1, rowValues.length).setValues([rowValues]);
+      }
       return this.data(200, { message: "Row updated" });
     } else {
+      // For new rows, always do a full insert
       this.addNewColumnsIfNeeded(sheet, [payload]);
       const processedPayload = this.processPayloadForInsertion(payload, headers.slice(1));
       processedPayload.unshift(formattedDate);
@@ -859,7 +881,7 @@ class SheetlogScript {
       // Single setValues() call is much more efficient than individual updates
       sheet.getRange(startRow, startCol, numRows, numCols).setValues(data);
       
-      // Update "Date Modified" column for affected rows if it exists
+      // Only update "Date Modified" if the column exists
       const headers = this.getHeaders(sheet);
       if (headers[0] === "Date Modified") {
         const timestamp = new Date();
@@ -869,7 +891,6 @@ class SheetlogScript {
           "MM/dd/yyyy HH:mm:ss"
         );
         
-        // Update timestamp for all affected rows
         sheet.getRange(startRow, 1, numRows, 1)
           .setValue(formattedDate);
       }
